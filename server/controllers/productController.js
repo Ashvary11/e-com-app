@@ -4,26 +4,27 @@ export const getProducts = async (req, res) => {
   try {
     const {
       search = "",
-      category,
+      category = "",
+      minPrice,
+      maxPrice,
       sort = "newest",
       page = 1,
       limit = 20,
-      minPrice,
-      maxPrice,
     } = req.query;
 
+    // 1. Build filter
     const filter = {
       isActive: true,
     };
-
-    if (category) {
-      filter.category = category;
-    }
 
     if (search.trim()) {
       filter.$text = {
         $search: search.trim(),
       };
+    }
+
+    if (category) {
+      filter.category = category;
     }
 
     if (minPrice || maxPrice) {
@@ -38,6 +39,7 @@ export const getProducts = async (req, res) => {
       }
     }
 
+    // 2. Sorting
     const sortOptions = {
       newest: { createdAt: -1 },
       oldest: { createdAt: 1 },
@@ -47,21 +49,24 @@ export const getProducts = async (req, res) => {
       name: { name: 1 },
     };
 
-    const currentPage = Math.max(Number(page), 1);
-    const perPage = Math.min(Math.max(Number(limit), 1), 100);
+    const sortBy = sortOptions[sort] || sortOptions.newest;
 
+    // 3. Pagination
+    const currentPage = Math.max(Number(page), 1);
+    const perPage = Math.min(Number(limit), 100);
     const skip = (currentPage - 1) * perPage;
 
-    const [products, total] = await Promise.all([
-      Product.find(filter)
-        .sort(sortOptions[sort] || sortOptions.newest)
-        .skip(skip)
-        .limit(perPage)
-        .lean(),
+    // 4. Get products
+    const products = await Product.find(filter)
+      .sort(sortBy)
+      .skip(skip)
+      .limit(perPage)
+      .lean();
 
-      Product.countDocuments(filter),
-    ]);
+    // 5. Get total products
+    const total = await Product.countDocuments(filter);
 
+    // 6. Send response
     res.json({
       success: true,
       products,
