@@ -1,12 +1,12 @@
 {
   "name": "server",
   "version": "3.0.0",
-  "description": "E-commerce V2 backend",
+  "description": "E-commerce V2 backend - App name : cartSphere ",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "seed:products": "node seed/seedProducts.js"
   },
   "keywords": [],
   "author": "",

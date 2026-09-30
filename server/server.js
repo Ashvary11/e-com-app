@@ -4,10 +4,9 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
-
 import connectDB from "./config/db.js";
-
 dotenv.config();
+import productRoutes from "./routes/productRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +41,8 @@ app.get("/api/health", (req, res) => {
     message: "E-commerce V2 API is running",
   });
 });
+
+app.use("/api/products", productRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

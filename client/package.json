@@ -3,6 +3,7 @@
   "private": true,
   "version": "3.0.0",
   "type": "module",
+  "description": "cartSphere - e-commerce website",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
