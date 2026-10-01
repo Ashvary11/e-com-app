@@ -16,7 +16,7 @@ import { useDispatch } from "react-redux";
 function ProductDetails() {
   // <ProductCard key={product._id} product={product} />
   const { slug } = useParams();
-  console.log(useParams());
+  // console.log(useParams());
   const dispatch = useDispatch();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);

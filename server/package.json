@@ -2,7 +2,7 @@
   "name": "server",
   "version": "3.0.0",
   "description": "E-commerce V2 backend - App name : cartSphere ",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.3",
     "nodemailer": "^10.0.13",
-    "razorpay": "^2.9.8"
+    "razorpay": "^2.9.8",
+    "zod": "^4.6.5"
   }
 }

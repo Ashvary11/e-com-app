@@ -99,6 +99,7 @@ function Cart() {
                         </div>
 
                         <Button
+                          asChild
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemove(item._id)}
@@ -112,6 +113,7 @@ function Cart() {
                         {/* Quantity */}
                         <div className="flex items-center rounded-md border">
                           <Button
+                            asChild
                             type="button"
                             variant="ghost"
                             size="icon"
@@ -126,6 +128,7 @@ function Cart() {
                           </span>
 
                           <Button
+                            asChild
                             type="button"
                             variant="ghost"
                             size="icon"
@@ -147,7 +150,7 @@ function Cart() {
                 </Card>
               ))}
 
-              {/* <Button variant="outline" onClick={handleClearCart}>
+              {/* <Button  asChild variant="outline" onClick={handleClearCart}>
                 Clear Cart
               </Button> */}
             </div>
@@ -177,11 +180,11 @@ function Cart() {
                   <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
 
-                <Button className="w-full" size="lg">
-                  Checkout
+                <Button asChild className="w-full" size="lg">
+                  <Link to="/checkout">Checkout</Link>
                 </Button>
 
-                <Button variant="outline" className="w-full" asChild>
+                <Button asChild variant="outline" className="w-full">
                   <Link to="/products">Continue Shopping</Link>
                 </Button>
               </div>

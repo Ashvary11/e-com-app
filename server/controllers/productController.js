@@ -127,7 +127,7 @@ export const getProducts = async (req, res) => {
 export const getProductByIdentifier = async (req, res) => {
   try {
     const { identifier } = req.params;
-    console.log(req.params);
+    // console.log(req.params);
 
     const query = mongoose.Types.ObjectId.isValid(identifier)
       ? { _id: identifier, isActive: true }

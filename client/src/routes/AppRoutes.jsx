@@ -6,6 +6,7 @@ import ProductDetails from "../pages/ProductDetails";
 import Cart from "../pages/Cart";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
+import Checkout from "../pages/Checkout";
 
 function AppRoutes() {
   return (
@@ -14,6 +15,7 @@ function AppRoutes() {
       <Route path="/products" element={<Products />} />
       <Route path="/products/:slug" element={<ProductDetails />} />
       <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
       <Route path="/login" element={<Login />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
