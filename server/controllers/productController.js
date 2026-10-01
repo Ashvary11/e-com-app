@@ -1,4 +1,5 @@
 import Product from "../models/Product.js";
+import mongoose from "mongoose";
 
 export const getProducts = async (req, res) => {
   try {
@@ -95,12 +96,44 @@ export const getProducts = async (req, res) => {
   }
 };
 
-export const getProductById = async (req, res) => {
+// export const getProductById = async (req, res) => {
+//   try {
+//     const product = await Product.findOne({
+//       _id: req.params.id,
+//       isActive: true,
+//     }).lean();
+
+//     if (!product) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       product,
+//     });
+//   } catch (error) {
+//     console.error("Get product error:", error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch product",
+//     });
+//   }
+// };
+
+export const getProductByIdentifier = async (req, res) => {
   try {
-    const product = await Product.findOne({
-      _id: req.params.id,
-      isActive: true,
-    }).lean();
+    const { identifier } = req.params;
+    console.log(req.params);
+
+    const query = mongoose.Types.ObjectId.isValid(identifier)
+      ? { _id: identifier, isActive: true }
+      : { slug: identifier, isActive: true };
+
+    const product = await Product.findOne(query).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -122,7 +155,6 @@ export const getProductById = async (req, res) => {
     });
   }
 };
-
 export const getProductCategories = async (req, res) => {
   try {
     const categories = await Product.distinct("category", {

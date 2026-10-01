@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
+import { ShoppingCart, Star } from "lucide-react";
 
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter } from "../ui/card";
+import { addToCart } from "../../store/slices/cartSlice";
+import { useDispatch } from "react-redux";
+import { toast } from "sonner";
 
 function ProductCard({ product }) {
   const {
@@ -19,18 +22,28 @@ function ProductCard({ product }) {
     reviewCount = 0,
     stock = 0,
   } = product;
-
+  const dispatch = useDispatch();
   const discount =
     originalPrice > price
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : 0;
 
   const image = images?.[0] || "/placeholder-product.png";
-
+  const handleAddToCart = () => {
+    dispatch(
+      addToCart({
+        ...product,
+        quantity: 1,
+      }),
+    );
+    toast.success("Product added to cart");
+  };
+  const isOutOfStock = product?.stock <= 0;
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
       {/* Image */}
-      <Link to={`/products/${slug || _id}`} className="block">
+      {/* <Link to={`/products/${_id}`} className="block"> */}
+      <Link to={`/products/${slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
             src={image}
@@ -92,8 +105,19 @@ function ProductCard({ product }) {
         )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full">
+      <CardFooter className="grid gap-2 p-4 pt-0">
+        <Button
+          size="lg"
+          variant="outline"
+          className="w-full"
+          disabled={isOutOfStock}
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+        </Button>
+
+        <Button asChild size="lg" className="w-full">
           <Link to={`/products/${slug || _id}`}>View Details</Link>
         </Button>
       </CardFooter>

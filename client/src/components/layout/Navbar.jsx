@@ -1,14 +1,16 @@
 import { Link, NavLink } from "react-router-dom";
 import Container from "./Container";
+import { useSelector } from "react-redux";
+import { ShoppingCart } from "lucide-react";
 
 function Navbar() {
   const navLinkClass = ({ isActive }) =>
     `transition-colors ${
-      isActive
-        ? "text-black font-semibold"
-        : "text-gray-600 hover:text-black"
+      isActive ? "text-black font-semibold" : "text-gray-600 hover:text-black"
     }`;
+  const cartItems = useSelector((state) => state.cart.items);
 
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   return (
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
       <Container>
@@ -30,9 +32,17 @@ function Navbar() {
           <div className="flex items-center gap-4">
             <Link
               to="/cart"
-              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-100"
+              className="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-100"
             >
-              Cart
+              <ShoppingCart className="h-4 w-4" />
+
+              <span>Cart</span>
+
+              {cartCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-xs font-semibold text-white">
+                  {cartCount}
+                </span>
+              )}
             </Link>
 
             <Link

@@ -1,7 +1,7 @@
 import express from "express";
 
 import {
-  getProductById,
+  getProductByIdentifier,
   getProductCategories,
   getProductPriceRange,
   getProducts,
@@ -13,6 +13,7 @@ router.get("/", getProducts);
 router.get("/categories", getProductCategories);
 router.get("/price-range", getProductPriceRange);
 
-router.get("/:id", getProductById);
+// router.get("/:id", getProductById);
+router.get("/:identifier", getProductByIdentifier);
 
 export default router;
