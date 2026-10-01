@@ -16,6 +16,12 @@ export const getProducts = async (req, res) => {
     const filter = {
       isActive: true,
     };
+    // {
+    //   isActive: true,
+    //   $text: { $search: "phone" },
+    //   category: "electronics",
+    //   price: { $gte: 100, $lte: 500 }
+    // }
 
     if (search.trim()) {
       filter.$text = {
@@ -41,12 +47,12 @@ export const getProducts = async (req, res) => {
 
     // 2. Sorting
     const sortOptions = {
-      newest: { createdAt: -1 },
-      oldest: { createdAt: 1 },
-      priceLow: { price: 1 },
-      priceHigh: { price: -1 },
-      rating: { rating: -1 },
-      name: { name: 1 },
+      newest: { createdAt: -1 }, // descending
+      oldest: { createdAt: 1 }, // ascending (A→Z, small→large)
+      priceLow: { price: 1 }, //   small→large
+      priceHigh: { price: -1 }, //  large→small
+      rating: { rating: -1 }, // descending
+      name: { name: 1 }, // ascending (A→Z, small→large)
     };
 
     const sortBy = sortOptions[sort] || sortOptions.newest;
@@ -113,6 +119,64 @@ export const getProductById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch product",
+    });
+  }
+};
+
+export const getProductCategories = async (req, res) => {
+  try {
+    const categories = await Product.distinct("category", {
+      isActive: true,
+    });
+
+    categories.sort((a, b) => a.localeCompare(b));
+
+    res.json({
+      success: true,
+      categories,
+    });
+  } catch (error) {
+    console.error("Get product categories error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch product categories",
+    });
+  }
+};
+export const getProductPriceRange = async (req, res) => {
+  try {
+    const result = await Product.aggregate([
+      {
+        $match: {
+          isActive: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          minPrice: { $min: "$price" },
+          maxPrice: { $max: "$price" },
+        },
+      },
+    ]);
+
+    const priceRange = result[0] || {
+      minPrice: 0,
+      maxPrice: 0,
+    };
+
+    res.json({
+      success: true,
+      minPrice: priceRange.minPrice,
+      maxPrice: priceRange.maxPrice,
+    });
+  } catch (error) {
+    console.error("Get product price range error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch price range",
     });
   }
 };

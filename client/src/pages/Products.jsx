@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import Container from "../components/layout/Container";
 import ProductCard from "../components/common/ProductCard";
 import { Skeleton } from "../components/ui/skeleton";
 import { Input } from "../components/ui/input";
+import { Slider } from "../components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -13,17 +13,43 @@ import {
   SelectValue,
 } from "../components/ui/select";
 
-import { fetchProducts, setFilters } from "../store/slices/productSlice";
+import {
+  fetchProducts,
+  fetchCategories,
+  setFilters,
+  clearFilters,
+  fetchPriceRange,
+} from "../store/slices/productSlice";
+import { Button } from "../components/ui/button";
 
 function Products() {
   const dispatch = useDispatch();
 
-  const { products, pagination, filters, loading, error } = useSelector(
-    (state) => state.products,
-  );
+  const {
+    products,
+    categories,
+    categoriesLoading,
+    priceRange,
+    pagination,
+    filters,
+    loading,
+    error,
+    priceRangeLoading,
+  } = useSelector((state) => state.products);
 
   const [searchInput, setSearchInput] = useState(filters.search);
+  const [localPriceRange, setLocalPriceRange] = useState(null);
+  // Fetch categories once.
+  useEffect(() => {
+    dispatch(fetchCategories());
+    dispatch(fetchPriceRange());
+  }, [dispatch]);
 
+  // useEffect(() => {
+  //   if (priceRange.max > 0) {
+  //     setLocalPriceRange([priceRange.min, priceRange.max]);
+  //   }
+  // }, [priceRange.min, priceRange.max]);
   // Fetch products whenever the active filters change.
   useEffect(() => {
     dispatch(
@@ -69,6 +95,56 @@ function Products() {
       }),
     );
   };
+  const handleCategoryChange = (value) => {
+    dispatch(
+      setFilters({
+        category: value === "all" ? "" : value,
+      }),
+    );
+  };
+  const handlePriceChange = (value) => {
+    setLocalPriceRange(value);
+  };
+  const handleApplyPrice = () => {
+    const [minPrice, maxPrice] = currentPriceRange;
+
+    dispatch(
+      setFilters({
+        minPrice,
+        maxPrice,
+      }),
+    );
+  };
+  const handleClearFilters = () => {
+    dispatch(clearFilters());
+    setSearchInput("");
+    setLocalPriceRange(null);
+  };
+
+  const formatCategoryName = (category) => {
+    return category
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+  const priceFilterActive = filters.minPrice !== "" || filters.maxPrice !== "";
+  //  when the user hasn't interacted with the slider yet.
+  const currentPriceRange =
+    Array.isArray(localPriceRange) && localPriceRange.length === 2
+      ? localPriceRange
+      : [priceRange.min, priceRange.max];
+
+  const isDefaultPriceRange =
+    currentPriceRange[0] === priceRange.min &&
+    currentPriceRange[1] === priceRange.max;
 
   return (
     <Container className="py-8">
@@ -95,28 +171,120 @@ function Products() {
             aria-label="Search products"
           />
         </div>
-
-        {/* Sort */}
-        <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-muted-foreground sm:block">
-            Sort by
-          </span>
-
-          <Select value={filters.sort} onValueChange={handleSortChange}>
+        {/* Filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Select
+            value={filters.category || "all"}
+            onValueChange={handleCategoryChange}
+            disabled={categoriesLoading}
+          >
             <SelectTrigger className="w-full sm:w-52">
-              <SelectValue placeholder="Sort products" />
+              <SelectValue placeholder="Category" />
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-              <SelectItem value="priceLow">Price: Low to High</SelectItem>
-              <SelectItem value="priceHigh">Price: High to Low</SelectItem>
-              <SelectItem value="rating">Top Rated</SelectItem>
-              <SelectItem value="name">Name: A-Z</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
+
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {formatCategoryName(category)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
+          {/* Sort */}
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-muted-foreground sm:block">
+              Sort by
+            </span>
+
+            <Select value={filters.sort} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-full sm:w-52">
+                <SelectValue placeholder="Sort products" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+                <SelectItem value="priceLow">Price: Low to High</SelectItem>
+                <SelectItem value="priceHigh">Price: High to Low</SelectItem>
+                <SelectItem value="rating">Top Rated</SelectItem>
+                <SelectItem value="name">Name: A-Z</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+      </div>
+
+      {/* Price Filter */}
+      <div className="rounded-lg border bg-muted/20 p-4">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold">Price Range</h2>
+
+            <p className="text-xs text-muted-foreground">
+              Filter products by price
+            </p>
+          </div>
+
+          {!priceRangeLoading && priceRange.max > 0 && (
+            <span className="text-sm font-medium">
+              {/* {formatPrice(localPriceRange[0])} -{" "}
+              {formatPrice(localPriceRange[1])} */}
+              {formatPrice(currentPriceRange[0])} -{" "}
+              {formatPrice(currentPriceRange[1])}
+            </span>
+          )}
+        </div>
+
+        {priceRangeLoading ? (
+          <Skeleton className="h-5 w-full" />
+        ) : priceRange.max > priceRange.min ? (
+          <>
+            <Slider
+              min={priceRange.min}
+              max={priceRange.max}
+              step={500}
+              value={currentPriceRange}
+              onValueChange={handlePriceChange}
+              className="py-2"
+            />
+
+            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+              <span>{formatPrice(priceRange.min)}</span>
+              <span>{formatPrice(priceRange.max)}</span>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-muted-foreground">
+                {priceFilterActive
+                  ? "Price filter applied"
+                  : "Select a price range"}
+              </p>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleApplyPrice}
+                disabled={isDefaultPriceRange && !priceFilterActive}
+              >
+                Apply Price
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Price range unavailable.
+          </p>
+        )}
+      </div>
+
+      {/* Clear Filters */}
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" onClick={handleClearFilters}>
+          Clear Filters
+        </Button>
       </div>
 
       {/* Error */}

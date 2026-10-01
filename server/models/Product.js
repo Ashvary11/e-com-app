@@ -84,13 +84,17 @@ const productSchema = new mongoose.Schema(
   },
 );
 
+// 1. TEXT INDEX — for search operations
 productSchema.index({
   name: "text",
   description: "text",
   brand: "text",
 });
 
+// 2. COMPOUND INDEX — fast filtering by category + price
 productSchema.index({ category: 1, price: 1 });
+
+// 3. SINGLE INDEX — fast sorting by newest first
 productSchema.index({ createdAt: -1 });
 
 const Product = mongoose.model("Product", productSchema);
