@@ -22,9 +22,12 @@ const limiter = rateLimit({
 
 app.use(helmet());
 
+const origins = [process.env.CLIENT_URL, "http://192.168.1.3:5173"].filter(
+  Boolean,
+);
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: origins,
     credentials: true,
   }),
 );

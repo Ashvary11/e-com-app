@@ -5,6 +5,7 @@ import ProductCard from "../components/common/ProductCard";
 import { Skeleton } from "../components/ui/skeleton";
 import { Input } from "../components/ui/input";
 import { Slider } from "../components/ui/slider";
+
 import {
   Select,
   SelectContent,
@@ -21,10 +22,18 @@ import {
   fetchPriceRange,
 } from "../store/slices/productSlice";
 import { Button } from "../components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../components/ui/pagination";
 
 function Products() {
   const dispatch = useDispatch();
-
+  const [showFloatingPagination, setShowFloatingPagination] = useState(false);
   const {
     products,
     categories,
@@ -87,7 +96,27 @@ function Products() {
 
     return () => clearTimeout(timer);
   }, [searchInput, filters.search, dispatch]);
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
 
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 200) {
+        setShowFloatingPagination(true);
+      } else if (currentScrollY < lastScrollY) {
+        setShowFloatingPagination(false);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
   const handleSortChange = (value) => {
     dispatch(
       setFilters({
@@ -145,7 +174,28 @@ function Products() {
   const isDefaultPriceRange =
     currentPriceRange[0] === priceRange.min &&
     currentPriceRange[1] === priceRange.max;
+  const handlePageChange = (page) => {
+    if (page < 1 || page > pagination.totalPages || page === pagination.page) {
+      return;
+    }
 
+    dispatch(
+      fetchProducts({
+        search: filters.search,
+        category: filters.category,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        sort: filters.sort,
+        page,
+        limit: pagination.limit,
+      }),
+    );
+
+    // window.scrollTo({
+    //   top: 0,
+    //   behavior: "smooth",
+    // });
+  };
   return (
     <Container className="py-8">
       {/* Header */}
@@ -159,48 +209,44 @@ function Products() {
         )}
       </div>
 
+      {/* Search */}
       {/* Toolbar */}
-      <div className="mb-8 flex flex-col gap-4 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search */}
-        <div className="w-full sm:max-w-md">
+      <div className="mb-4 rounded-xl border bg-muted/20 p-3 sm:p-4">
+        <div className="space-y-3">
+          {/* Search */}
           <Input
             type="search"
             placeholder="Search products..."
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             aria-label="Search products"
+            className="h-10"
           />
-        </div>
-        {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Select
-            value={filters.category || "all"}
-            onValueChange={handleCategoryChange}
-            disabled={categoriesLoading}
-          >
-            <SelectTrigger className="w-full sm:w-52">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+          {/* Filters */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Select
+              value={filters.category || "all"}
+              onValueChange={handleCategoryChange}
+              disabled={categoriesLoading}
+            >
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
 
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {formatCategoryName(category)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
 
-          {/* Sort */}
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:block">
-              Sort by
-            </span>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {formatCategoryName(category)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <Select value={filters.sort} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-full sm:w-52">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue placeholder="Sort products" />
               </SelectTrigger>
 
@@ -328,11 +374,60 @@ function Products() {
 
       {/* Products */}
       {!loading && products.length > 0 && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {!loading && pagination.totalPages > 1 && showFloatingPagination && (
+            <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
+              <div className="rounded-full border bg-background/95 p-1 shadow-lg backdrop-blur">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          handlePageChange(pagination.page - 1);
+                        }}
+                        className={
+                          !pagination.hasPreviousPage
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+
+                    <PaginationItem>
+                      <PaginationLink isActive>
+                        {pagination.page} / {pagination.totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          handlePageChange(pagination.page + 1);
+                        }}
+                        className={
+                          !pagination.hasNextPage
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </Container>
   );
