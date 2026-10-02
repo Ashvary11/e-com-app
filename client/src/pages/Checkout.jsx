@@ -22,14 +22,63 @@ const initialForm = {
   postalCode: "",
   country: "India",
 };
+
+const CHECKOUT_IDEMPOTENCY_KEY = "cartsphere_checkout_attempt";
+
 function FieldError({ message }) {
   if (!message) return null;
+
   return <p className="mt-1.5 text-sm text-destructive">{message}</p>;
 }
 
+const getCartSignature = (items) =>
+  JSON.stringify(
+    items
+      .map((item) => ({
+        productId: item._id,
+        quantity: item.quantity,
+      }))
+      .sort((a, b) => a.productId.localeCompare(b.productId)),
+  );
+
+const getCheckoutIdempotencyKey = (cartItems) => {
+  const cartSignature = getCartSignature(cartItems);
+
+  const saved = sessionStorage.getItem(CHECKOUT_IDEMPOTENCY_KEY);
+
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+
+      // Same cart = reuse the existing key.
+      if (parsed.cartSignature === cartSignature && parsed.key) {
+        return parsed.key;
+      }
+    } catch {
+      // Invalid stored value. A new key will be created below.
+      sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+    }
+  }
+
+  // Cart changed or no previous checkout attempt exists.
+  const key = crypto.randomUUID();
+
+  sessionStorage.setItem(
+    CHECKOUT_IDEMPOTENCY_KEY,
+    JSON.stringify({
+      key,
+      cartSignature,
+    }),
+  );
+
+  return key;
+};
+
 function Checkout() {
   const navigate = useNavigate();
+
   const cartItems = useSelector((state) => state.cart.items);
+
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
@@ -61,6 +110,7 @@ function Checkout() {
 
   const validateForm = () => {
     const result = checkoutSchema.safeParse(form);
+
     if (result.success) {
       setErrors({});
       return result.data;
@@ -100,15 +150,20 @@ function Checkout() {
     try {
       setLoading(true);
 
-      const idempotencyKey = crypto.randomUUID();
+      // Same cart + retry = same idempotency key.
+      // Changed cart = new idempotency key.
+      const idempotencyKey = getCheckoutIdempotencyKey(cartItems);
 
       const response = await api.post("/orders", {
         email: validatedForm.email,
+
         idempotencyKey,
+
         items: cartItems.map((item) => ({
           productId: item._id,
           quantity: item.quantity,
         })),
+
         shippingAddress: {
           fullName: validatedForm.fullName,
           phone: validatedForm.phone,
@@ -121,19 +176,27 @@ function Checkout() {
       });
 
       const order = response.data.order;
-      toast.success("Order created successfully");
 
-      // Temporary until Razorpay is integrated.
-      // Do not clear cart here.
-      navigate(`/orders/${order.id}`, {
-        state: {
-          order,
-        },
-      });
+      // Order creation succeeded.
+      // The idempotency key is no longer needed for this checkout attempt.
+      sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+
+      toast.success(response.data.message || "Order created successfully");
+
+      console.log("Created order:", order);
+
+      // Temporary until Razorpay + order details page are implemented.
+      // Do NOT clear the cart here.
+      //
+      // navigate(`/orders/${order.id}`, {
+      //   state: {
+      //     order,
+      //   },
+      // });
     } catch (error) {
       const data = error.response?.data;
 
-      // Map backend Zod field errors to the matching inputs.
+      // Map backend Zod field errors to matching inputs.
       if (data?.errors) {
         const backendErrors = {};
 
@@ -149,7 +212,9 @@ function Checkout() {
         }));
 
         const firstError = Object.values(backendErrors)[0];
+
         toast.error(firstError || data.message || "Invalid order details");
+
         return;
       }
 
@@ -246,7 +311,7 @@ function Checkout() {
                       }
                     />
 
-                    <FieldError message={errors.email} name="email" />
+                    <FieldError message={errors.email} />
                   </div>
 
                   {/* Full Name */}
