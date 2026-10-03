@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    // ==================================================
-    // Profile
-    // ==================================================
-
     name: {
       type: String,
       required: true,
@@ -30,21 +26,11 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // ==================================================
-    // Local Authentication
-    // ==================================================
-
-    // Null for accounts that do not have a local password,
-    // for example a Google-only account.
     password: {
       type: String,
       default: null,
       select: false,
     },
-
-    // ==================================================
-    // Authorization
-    // ==================================================
 
     role: {
       type: String,
@@ -52,10 +38,6 @@ const userSchema = new mongoose.Schema(
       default: "user",
       index: true,
     },
-
-    // ==================================================
-    // Account State
-    // ==================================================
 
     isEmailVerified: {
       type: Boolean,
@@ -72,43 +54,42 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    // ==================================================
-    // Email Verification
-    // ==================================================
-
-    // Store only the hash of the verification token.
-    emailVerificationTokenHash: {
+    emailVerificationOtpHash: {
       type: String,
       default: null,
       select: false,
     },
 
-    emailVerificationTokenExpiresAt: {
+    emailVerificationOtpExpiresAt: {
       type: Date,
       default: null,
       select: false,
     },
 
-    // ==================================================
-    // Password Reset
-    // ==================================================
+    emailVerificationOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
+    emailVerificationOtpLastSentAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
 
     // Store only the hash of the reset token.
-    passwordResetTokenHash: {
+    passwordResetOtpHash: {
       type: String,
       default: undefined,
       select: false,
     },
 
-    passwordResetTokenExpiresAt: {
+    passwordResetOtpExpiresAt: {
       type: Date,
       default: undefined,
       select: false,
     },
-
-    // ==================================================
-    // Security / Activity
-    // ==================================================
 
     lastLoginAt: {
       type: Date,

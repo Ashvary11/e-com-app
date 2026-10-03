@@ -1,33 +1,36 @@
 import express from "express";
 
 import {
-  registerFn,
-  loginFn,
-  verifyEmailFn,
-  resendVerificationFn,
-  forgotPasswordFn,
-  resetPasswordFn,
-  logoutFn,
-  logoutAllFn,
-  deleteAccountFn,
+  registerEmailUser,
+  verifyEmail,
+  resendEmailOtp,
+  emailLogin,
+  forgotPassword,
+  resetPassword,
+  logout,
+  logoutFromEverywhere,
+  me,
+  deleteAccount,
+  changePassword,
 } from "../controllers/authController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerFn);
-router.post("/login", loginFn);
+router.post("/register", registerEmailUser);
+router.post("/verify-email", verifyEmail);
+router.post("/resend-verification", resendEmailOtp);
+router.post("/login", emailLogin);
 
-router.post("/verify-email", verifyEmailFn);
-router.post("/resend-verification", resendVerificationFn);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+router.patch("/change-password", authMiddleware, changePassword);
 
-router.post("/forgot-password", forgotPasswordFn);
-router.post("/reset-password", resetPasswordFn);
+router.post("/logout", authMiddleware, logout);
+router.post("/logout-all", authMiddleware, logoutFromEverywhere);
 
-router.post("/logout", authMiddleware, logoutFn);
-router.post("/logout-all", authMiddleware, logoutAllFn);
+router.get("/me", authMiddleware, me);
 
-router.delete("/account", authMiddleware, deleteAccountFn);
-
+router.delete("/account-delete", authMiddleware, deleteAccount);
 export default router;

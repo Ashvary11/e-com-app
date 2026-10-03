@@ -1,17 +1,24 @@
 import {
   registerSchema,
-  loginSchema,
   verifyEmailSchema,
-  resendVerificationSchema,
+  loginWithEmailSchema,
+  verifyEmailOnlySchema,
+  resetPasswordSchema,
+  forgotPasswordSchema,
+  changePasswordSchema,
 } from "../validators/authValidator.js";
 import {
-  createUser,
-  deleteUserAccount,
-  loginUser,
-  logoutAllSessions,
-  logoutUser,
-  resendVerification,
-  verifyEmail,
+  changePasswordFn,
+  createUserSession,
+  deleteUserAccountFn,
+  emailLoginFn,
+  emailVerificationFn,
+  forgotPasswordFn,
+  logoutAllSessionsFn,
+  logoutFn,
+  resendEmailOtpFn,
+  resetPasswordFn,
+  userRegistrationFn,
 } from "../services/authService.js";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -35,21 +42,21 @@ const refreshCookieOptions = {
     1000,
 };
 
-export const registerFn = async (req, res) => {
+export const registerEmailUser = async (req, res) => {
   try {
-    const result = registerSchema.safeParse(req.body);
+    const reqBody = registerSchema.safeParse(req.body);
 
-    if (!result.success) {
+    if (!reqBody.success) {
       return res.status(400).json({
         success: false,
         message: "Invalid registration data.",
-        errors: result.error.flatten().fieldErrors,
+        errors: reqBody.error.flatten().fieldErrors,
       });
     }
 
-    const { name, email, password } = result.data;
+    const { name, email, password } = reqBody.data;
 
-    const { user, verificationToken } = await createUser({
+    const { user, otp } = await userRegistrationFn({
       name,
       email,
       password,
@@ -64,7 +71,7 @@ export const registerFn = async (req, res) => {
     // await sendVerificationEmail({
     //   email: user.email,
     //   name: user.name,
-    //   token: verificationToken,
+    //   verificationToken: verificationToken,
     // });
 
     return res.status(201).json({
@@ -77,8 +84,11 @@ export const registerFn = async (req, res) => {
         avatar: user.avatar,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
+        otp: otp, //remove later
       },
     });
+
+    // handle duplicate user later. /fake user
   } catch (error) {
     console.error("Register error:", error);
 
@@ -98,34 +108,49 @@ export const registerFn = async (req, res) => {
     });
   }
 };
-export const verifyEmailFn = async (req, res) => {
+export const verifyEmail = async (req, res) => {
   try {
-    const result = verifyEmailSchema.safeParse(req.body);
+    const reqBody = verifyEmailSchema.safeParse(req.body);
 
-    if (!result.success) {
+    if (!reqBody.success) {
       return res.status(400).json({
         success: false,
         message: "Invalid verification data.",
-        errors: result.error.flatten().fieldErrors,
+        errors: reqBody.error.flatten().fieldErrors,
       });
     }
 
-    const { token } = result.data;
+    // in frontend dont manually fill email insted used that same email when registerd and show only otp fill screen.
+    const { otp, email } = reqBody.data;
+    const user = await emailVerificationFn(otp, email);
+    //------------------
 
-    const user = await verifyEmail(token);
+    if (user.isEmailVerified) {
+      // Create a new login session.
+      const { jwtToken, refreshToken } = await createUserSession({
+        user,
+        userAgent: req.get("user-agent"),
+        ipAddress: req.ip,
+      });
 
-    return res.status(200).json({
-      success: true,
-      message: "Email verified successfully.",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-      },
-    });
+      return res
+        .cookie("accessToken", jwtToken, jwtCookieOptions)
+        .cookie("refreshToken", refreshToken, refreshCookieOptions)
+        .status(200)
+        .json({
+          success: true,
+          message: "Email verified successfully.",
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar,
+            role: user.role,
+            isEmailVerified: user.isEmailVerified,
+            jwtToken, //remove later
+          },
+        });
+    }
   } catch (error) {
     console.error("Verify email error:", error);
 
@@ -142,31 +167,30 @@ export const verifyEmailFn = async (req, res) => {
     });
   }
 };
-export const resendVerificationFn = async (req, res) => {
+export const resendEmailOtp = async (req, res) => {
   try {
-    const result = resendVerificationSchema.safeParse(req.body);
+    const reqBody = verifyEmailOnlySchema.safeParse(req.body);
 
-    if (!result.success) {
+    if (!reqBody.success) {
       return res.status(400).json({
         success: false,
-        message: "Invalid email.",
-        errors: result.error.flatten().fieldErrors,
+        message: "Invalid email or Otp",
+        errors: reqBody.error.flatten().fieldErrors,
       });
     }
 
-    const { email } = result.data;
+    const { email } = reqBody.data;
 
-    const resultData = await resendVerification(email);
+    const resultData = await resendEmailOtpFn(email);
 
     if (!resultData) {
       return res.status(200).json({
-        success: true,
-        message:
-          "If an account exists with this email, a verification email will be sent.",
+        success: false,
+        message: "user not found.",
       });
     }
 
-    const { verificationToken } = resultData;
+    const { otp } = resultData;
 
     // TODO:
     // Send verificationToken through Brevo/Nodemailer.
@@ -176,6 +200,7 @@ export const resendVerificationFn = async (req, res) => {
       success: true,
       message:
         "If the account is not verified, a new verification email will be sent.",
+      otp, //remove later
     });
   } catch (error) {
     console.error("Resend verification error:", error);
@@ -193,21 +218,23 @@ export const resendVerificationFn = async (req, res) => {
     });
   }
 };
-export const loginFn = async (req, res) => {
-  try {
-    const result = loginSchema.safeParse(req.body);
 
-    if (!result.success) {
+// after email verify auto login and set cookies
+export const emailLogin = async (req, res) => {
+  try {
+    const reqBody = loginWithEmailSchema.safeParse(req.body);
+
+    if (!reqBody.success) {
       return res.status(400).json({
         success: false,
         message: "Invalid login data.",
-        errors: result.error.flatten().fieldErrors,
+        errors: reqBody.error.flatten().fieldErrors,
       });
     }
 
-    const { email, password } = result.data;
+    const { email, password } = reqBody.data;
 
-    const { user, jwtToken, refreshToken } = await loginUser({
+    const { user, jwtToken, refreshToken } = await emailLoginFn({
       email,
       password,
       userAgent: req.get("user-agent"),
@@ -253,34 +280,31 @@ export const loginFn = async (req, res) => {
     });
   }
 };
-export const forgotPasswordFn = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
-    const result = forgotPasswordSchema.safeParse(req.body);
+    const reqBody = forgotPasswordSchema.safeParse(req.body);
 
-    if (!result.success) {
+    if (!reqBody.success) {
       return res.status(400).json({
         success: false,
         message: "Invalid email.",
-        errors: result.error.flatten().fieldErrors,
+        errors: reqBody.error.flatten().fieldErrors,
       });
     }
 
-    const { email } = result.data;
+    const { email } = reqBody.data;
 
-    const resultData = await forgotPassword(email);
+    const { otp } = await forgotPasswordFn(email);
 
-    if (resultData) {
-      const { resetToken } = resultData;
-
-      // TODO:
-      // Send resetToken through Brevo/Nodemailer.
-      // Never send the raw token to the frontend.
-    }
+    // TODO:
+    // Send resetToken through Brevo/Nodemailer.
+    // Never send the raw token to the frontend.
 
     return res.status(200).json({
       success: true,
       message:
-        "If an account exists with this email, a password reset email will be sent.",
+        "We have received a request for reset-password, An otp has been sended",
+      otp, // remove later
     });
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -292,23 +316,24 @@ export const forgotPasswordFn = async (req, res) => {
     });
   }
 };
-export const resetPasswordFn = async (req, res) => {
+export const resetPassword = async (req, res) => {
   try {
-    const result = resetPasswordSchema.safeParse(req.body);
+    const reqBody = resetPasswordSchema.safeParse(req.body);
 
-    if (!result.success) {
+    if (!reqBody.success) {
       return res.status(400).json({
         success: false,
         message: "Invalid password reset data.",
-        errors: result.error.flatten().fieldErrors,
+        errors: reqBody.error.flatten().fieldErrors,
       });
     }
+    const { email, otp, newPassword, confirmPassword } = reqBody.data;
 
-    const { token, password } = result.data;
-
-    await resetPassword({
-      token,
-      password,
+    await resetPasswordFn({
+      email,
+      otp,
+      newPassword,
+      confirmPassword,
     });
 
     return res.status(200).json({
@@ -331,9 +356,9 @@ export const resetPasswordFn = async (req, res) => {
     });
   }
 };
-export const logoutFn = async (req, res) => {
+export const logout = async (req, res) => {
   try {
-    await logoutUser(req.user.sessionId);
+    await logoutFn(req.user.userId, req.user.sessionId);
 
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
@@ -351,9 +376,9 @@ export const logoutFn = async (req, res) => {
     });
   }
 };
-export const logoutAllFn = async (req, res) => {
+export const logoutFromEverywhere = async (req, res) => {
   try {
-    await logoutAllSessions(req.user.userId);
+    await logoutAllSessionsFn(req.user.userId);
 
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
@@ -371,12 +396,32 @@ export const logoutAllFn = async (req, res) => {
     });
   }
 };
-export const deleteAccountFn = async (req, res) => {
-  try {
-    await deleteUserAccount(req.user.userId);
 
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+export const me = async (req, res) => {
+  // no need to call db becuse we are fetching user data from jwt token.
+  return res.status(200).json({
+    success: true,
+    user: {
+      id: req.user.userId,
+      name: req.user.user.name,
+      email: req.user.user.email,
+      avatar: req.user.user.avatar,
+      role: req.user.user.role,
+      isEmailVerified: req.user.user.isEmailVerified,
+    },
+  });
+};
+
+// handle this with care add two step email deletion also later, and
+// also delete user order his cart and wishlist.
+// save user ac for 30 days and isACtive === false and set deactivatedAt.
+// and after 30 days delete user account.
+export const deleteAccount = async (req, res) => {
+  try {
+    await deleteUserAccountFn(req.user.userId);
+
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -395,6 +440,43 @@ export const deleteAccountFn = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong while deleting your account.",
+    });
+  }
+};
+export const changePassword = async (req, res) => {
+  try {
+    const reqBody = changePasswordSchema.safeParse(req.body);
+
+    if (!reqBody.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid password change data.",
+        errors: reqBody.error.flatten().fieldErrors,
+      });
+    }
+
+    const { currentPassword, newPassword } = reqBody.data;
+
+    await changePasswordFn({
+      userId: req.user.userId,
+      currentPassword,
+      newPassword,
+      currentSessionId: req.user.sessionId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Password changed successfully. Other sessions have been logged out.",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode
+        ? error.message
+        : "Something went wrong while changing your password.",
     });
   }
 };
