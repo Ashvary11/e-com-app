@@ -22,6 +22,7 @@ import {
   resetPasswordFn,
   userRegistrationFn,
 } from "../services/authService.js";
+import { sendEmail } from "../utils/email/sendEmail.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -63,22 +64,12 @@ export const registerEmailUser = async (req, res) => {
       email,
       password,
     });
-
-    // TODO:
-    // Send verificationToken through Brevo/Nodemailer.
-    // The raw token is used to build the verification link.
-    // Never send the raw token to the frontend.
-    //
-    // Example later:
-    // await sendVerificationEmail({
-    //   email: user.email,
-    //   name: user.name,
-    //   verificationToken: verificationToken,
-    // });
+    await sendEmail("verifyMail", { name, otp }, email) 
+   
 
     return res.status(201).json({
       success: true,
-      message: "Account created successfully. Please verify your email.",
+      message: "Please verify your email.",
       user: {
         id: user._id,
         name: user.name,
@@ -134,7 +125,7 @@ export const verifyEmail = async (req, res) => {
         userAgent: req.get("user-agent"),
         ipAddress: req.ip,
       });
-
+      await sendEmail("welcomeMail", user, user.email);
       return res
         .cookie("accessToken", jwtToken, jwtCookieOptions)
         .cookie("refreshToken", refreshToken, refreshCookieOptions)
@@ -194,15 +185,13 @@ export const resendEmailOtp = async (req, res) => {
 
     const { otp } = resultData;
 
-    // TODO:
-    // Send verificationToken through Brevo/Nodemailer.
-    // Never send the raw token to the frontend.
+    await sendEmail("verifyMail", otp, email);
 
     return res.status(200).json({
       success: true,
       message:
         "If the account is not verified, a new verification email will be sent.",
-      otp, //remove later
+      otp,
     });
   } catch (error) {
     console.error("Resend verification error:", error);
@@ -242,7 +231,7 @@ export const emailLogin = async (req, res) => {
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
     });
-
+    sendEmail("newLoginMail", user, email);
     return res
       .cookie("accessToken", jwtToken, jwtCookieOptions)
       .cookie("refreshToken", refreshToken, refreshCookieOptions)
@@ -298,9 +287,7 @@ export const forgotPassword = async (req, res) => {
 
     const { otp } = await forgotPasswordFn(email);
 
-    // TODO:
-    // Send resetToken through Brevo/Nodemailer.
-    // Never send the raw token to the frontend.
+    sendEmail("resetPasswordMail", { otp }, email);
 
     return res.status(200).json({
       success: true,
@@ -337,10 +324,11 @@ export const resetPassword = async (req, res) => {
       newPassword,
       confirmPassword,
     });
-    
+
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
 
+    sendEmail("passwordResetSuccessMail", {}, email);
     return res.status(200).json({
       success: true,
       message: "Password reset successfully. Please log in again.",
@@ -428,6 +416,7 @@ export const deleteAccount = async (req, res) => {
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
 
+    await sendEmail("accountDeletedMail", {}, req.user.email);
     return res.status(200).json({
       success: true,
       message: "Your account has been deleted successfully.",
@@ -462,12 +451,13 @@ export const changePassword = async (req, res) => {
 
     const { currentPassword, newPassword } = reqBody.data;
 
-    await changePasswordFn({
+    const user = await changePasswordFn({
       userId: req.user.userId,
       currentPassword,
       newPassword,
       currentSessionId: req.user.sessionId,
     });
+    sendEmail("passwordResetSuccessMail", { user }, user.email);
 
     return res.status(200).json({
       success: true,
