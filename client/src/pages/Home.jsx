@@ -1,9 +1,10 @@
 import Container from "../components/layout/Container";
+import Products from "./Products";
 
 function Home() {
   return (
     <Container>
-      <section className="py-16 sm:py-24">
+      {/* <section className="py-16 sm:py-24">
         <div className="max-w-3xl">
           <p className="mb-4 text-sm font-semibold uppercase tracking-wider text-blue-600">
             Modern Ecommerce
@@ -19,7 +20,8 @@ function Home() {
             ecommerce platform built with React and Node.js.
           </p>
         </div>
-      </section>
+      </section> */}
+      <Products />
     </Container>
   );
 }

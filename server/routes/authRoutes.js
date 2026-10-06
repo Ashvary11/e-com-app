@@ -27,7 +27,7 @@ router.post("/verify-email", verifyEmail);
 router.post("/resend-verification", resendEmailOtp);
 router.post("/login", emailLogin);
 
-router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password", forgotPassword); //two time reuse 
 router.post("/reset-password", resetPassword);
 
 router.patch("/change-password", authMiddleware, changePassword);

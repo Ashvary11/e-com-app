@@ -328,7 +328,8 @@ export const resetPassword = async (req, res) => {
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
 
-    sendEmail("passwordResetSuccessMail", {}, email);
+    await sendEmail("passwordResetSuccessMail", {}, email);
+
     return res.status(200).json({
       success: true,
       message: "Password reset successfully. Please log in again.",

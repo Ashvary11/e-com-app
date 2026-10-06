@@ -1,16 +1,20 @@
-import { Link, NavLink } from "react-router-dom";
-import Container from "./Container";
+import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ShoppingCart } from "lucide-react";
 
-function Navbar() {
-  const navLinkClass = ({ isActive }) =>
-    `transition-colors ${
-      isActive ? "text-black font-semibold" : "text-gray-600 hover:text-black"
-    }`;
-  const cartItems = useSelector((state) => state.cart.items);
+import Container from "./Container";
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+function Navbar() {
+  const cartItems = useSelector((state) => state.cart.items);
+  const { user, isAuthenticated, loading } = useSelector(
+    (state) => state.auth,
+  );
+
+  const cartCount = cartItems.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
+
   return (
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
       <Container>
@@ -18,16 +22,6 @@ function Navbar() {
           <Link to="/" className="text-xl font-bold tracking-tight">
             Cart<span className="text-indigo-600">Sphere</span>
           </Link>
-
-          <div className="hidden items-center gap-6 md:flex">
-            <NavLink to="/" className={navLinkClass}>
-              Home
-            </NavLink>
-
-            <NavLink to="/products" className={navLinkClass}>
-              Products
-            </NavLink>
-          </div>
 
           <div className="flex items-center gap-4">
             <Link
@@ -45,12 +39,22 @@ function Navbar() {
               )}
             </Link>
 
-            <Link
-              to="/login"
-              className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-            >
-              Login
-            </Link>
+            {!loading &&
+              (isAuthenticated ? (
+                <Link
+                  to="/account"
+                  className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  {user?.name}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  Login
+                </Link>
+              ))}
           </div>
         </nav>
       </Container>
