@@ -14,8 +14,10 @@ import {
   emailLoginFn,
   emailVerificationFn,
   forgotPasswordFn,
+  getActiveSessionsFn,
   logoutAllSessionsFn,
   logoutFn,
+  refreshSessionFn,
   resendEmailOtpFn,
   resetPasswordFn,
   userRegistrationFn,
@@ -335,6 +337,9 @@ export const resetPassword = async (req, res) => {
       newPassword,
       confirmPassword,
     });
+    
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -360,8 +365,8 @@ export const logout = async (req, res) => {
   try {
     await logoutFn(req.user.userId, req.user.sessionId);
 
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -380,8 +385,8 @@ export const logoutFromEverywhere = async (req, res) => {
   try {
     await logoutAllSessionsFn(req.user.userId);
 
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -477,6 +482,63 @@ export const changePassword = async (req, res) => {
       message: error.statusCode
         ? error.message
         : "Something went wrong while changing your password.",
+    });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  try {
+    const incomingRefreshToken = req.cookies.refreshToken;
+
+    const { user, jwtToken, refreshToken } = await refreshSessionFn({
+      refreshToken: incomingRefreshToken,
+    });
+
+    return res
+      .cookie("accessToken", jwtToken, jwtCookieOptions)
+      .cookie("refreshToken", refreshToken, refreshCookieOptions)
+      .status(200)
+      .json({
+        success: true,
+        message: "Session refreshed.",
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          role: user.role,
+          isEmailVerified: user.isEmailVerified,
+        },
+      });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+
+    // Clear cookies so the client stops retrying with a dead token
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
+
+    return res.status(error.statusCode || 401).json({
+      success: false,
+      message: error.message || "Could not refresh session.",
+    });
+  }
+};
+export const getActiveSessions = async (req, res) => {
+  try {
+    const userId = req.user.userId.toString();
+    // console.log(userId, "----------------");
+
+    const sessions = await getActiveSessionsFn(userId);
+
+    return res.status(200).json({
+      success: true,
+      count: sessions.length,
+      data: sessions,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 401).json({
+      success: false,
+      message: error.message || "Something went wrong finding sessions",
     });
   }
 };

@@ -21,7 +21,7 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       required: true,
       select: false,
-        index: true,
+      index: true,
     },
 
     deviceName: {
@@ -63,7 +63,11 @@ const sessionSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+// Index for finding sessions of a user
+sessionSchema.index({ userId: 1, deviceName: 1, revokedAt: 1 });
 
 const Session = mongoose.model("Session", sessionSchema);
 
 export default Session;
+
+// add ttl later for expired sessioon in next  7/30 days (keeping now for audit)

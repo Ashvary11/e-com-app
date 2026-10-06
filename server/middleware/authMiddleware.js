@@ -61,7 +61,7 @@ export const authMiddleware = async (req, res, next) => {
       userId: user._id,
       sessionId: session.sessionId,
       role: user.role,
-      user,
+      user,  //=this is whole user Obj
     };
 
     next();

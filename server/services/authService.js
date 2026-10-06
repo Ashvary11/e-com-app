@@ -11,6 +11,7 @@ import {
 } from "../utils/auth.js";
 
 import { generateJwtToken } from "../utils/jwt.js";
+import { parseUserAgent } from "../utils/parseUserAgent.js";
 
 export const REFRESH_TOKEN_DAYS = Number(
   process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || 30,
@@ -357,13 +358,14 @@ export const deleteUserAccountFn = async (userId) => {
   });
 };
 
-// in authService.js
 export const createUserSession = async ({ user, userAgent, ipAddress }) => {
-  // Check for an existing active session from the same client
+  const { deviceName } = parseUserAgent(userAgent);
+
   let session = await Session.findOne({
     userId: user._id,
-    userAgent,
-    ipAddress,
+    // userAgent,
+    // ipAddress,
+    deviceName,
     revokedAt: null,
     expiresAt: { $gt: new Date() },
   });
@@ -378,6 +380,9 @@ export const createUserSession = async ({ user, userAgent, ipAddress }) => {
     // Reuse — rotate the refresh token
     session.refreshTokenHash = refreshTokenHash;
     session.expiresAt = sessionExpiresAt;
+    session.lastUsedAt = new Date();
+    session.ipAddress = ipAddress;
+    session.userAgent = userAgent;
     await session.save();
   } else {
     // New session
@@ -388,14 +393,19 @@ export const createUserSession = async ({ user, userAgent, ipAddress }) => {
       refreshTokenHash,
       userAgent,
       ipAddress,
+      deviceName,
       expiresAt: sessionExpiresAt,
     });
   }
 
   const jwtToken = generateJwtToken(user._id, session.sessionId);
 
-  user.lastLoginAt = new Date();
-  await user.save();
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { lastLoginAt: new Date() } },
+  );
+  // user.lastLoginAt = new Date();
+  // await user.save();
 
   return { user, jwtToken, refreshToken };
 };
@@ -451,4 +461,79 @@ export const changePasswordFn = async ({
   );
 
   return user;
+};
+
+export const refreshSessionFn = async ({ refreshToken }) => {
+  if (!refreshToken) {
+    const error = new Error("Refresh token missing.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const refreshTokenHash = generateHash(refreshToken);
+
+  const session = await Session.findOne({
+    refreshTokenHash,
+    revokedAt: null,
+    expiresAt: { $gt: new Date() },
+  }).select("+refreshTokenHash +userId +sessionId");
+
+  if (!session) {
+    const error = new Error("Invalid or expired refresh token.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await User.findById(session.userId);
+
+  if (!user) {
+    // Session points to a deleted user — clean up
+    session.revokedAt = new Date();
+    await session.save();
+
+    const error = new Error("User account not found.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (!user.isActive || user.isBlocked) {
+    const error = new Error("Your account is not available.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  // Rotate the refresh token
+  const newRefreshToken = generateRefreshToken();
+  const newRefreshTokenHash = generateHash(newRefreshToken);
+  const newSessionExpiresAt = new Date(
+    Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+  );
+
+  session.refreshTokenHash = newRefreshTokenHash;
+  session.expiresAt = newSessionExpiresAt;
+  session.lastUsedAt = new Date();
+  await session.save();
+
+  // Issue a fresh access token bound to the same sessionId
+  const jwtToken = generateJwtToken(user._id, session.sessionId);
+
+  return { user, jwtToken, refreshToken: newRefreshToken };
+};
+export const getActiveSessionsFn = async (userId) => {
+  if (!userId || typeof userId === "object") {
+    throw new Error(
+      `getActiveSessionsFn expected a userId string/ObjectId, got: ${typeof userId}`,
+    );
+  }
+
+  return await Session.find(
+    { userId, revokedAt: null, expiresAt: { $gt: new Date() } },
+    {
+      sessionId: 1,
+      deviceName: 1,
+      ipAddress: 1,
+      lastUsedAt: 1,
+      createdAt: 1,
+    },
+  ).sort({ lastUsedAt: -1 });
 };

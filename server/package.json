@@ -24,6 +24,7 @@
     "mongoose": "^9.10.3",
     "nodemailer": "^10.0.13",
     "razorpay": "^2.9.8",
+    "ua-parser-js": "^2.0.10",
     "zod": "^4.6.5"
   }
 }
