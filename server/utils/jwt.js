@@ -6,7 +6,7 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not configured");
 }
 
-const EXPIRE_IN = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || "15m";
+const EXPIRE_IN = process.env.ACCESS_TOKEN_EXPIRES_IN || "15m";
 
 export const generateJwtToken = (userId, sessionId) => {
   return jwt.sign(
