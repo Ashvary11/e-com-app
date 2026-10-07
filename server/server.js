@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,6 +50,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/cart", cartRoutes);
 // --------------------------
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

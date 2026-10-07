@@ -6,14 +6,9 @@ import Container from "./Container";
 
 function Navbar() {
   const cartItems = useSelector((state) => state.cart.items);
-  const { user, isAuthenticated, loading } = useSelector(
-    (state) => state.auth,
-  );
+  const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
 
-  const cartCount = cartItems.reduce(
-    (total, item) => total + item.quantity,
-    0,
-  );
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
@@ -45,7 +40,7 @@ function Navbar() {
                   to="/account"
                   className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
                 >
-                  {user?.name}
+                  {user?.name.split(" ")[0]}
                 </Link>
               ) : (
                 <Link

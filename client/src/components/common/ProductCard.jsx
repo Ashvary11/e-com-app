@@ -5,8 +5,9 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter } from "../ui/card";
 import { addToCart } from "../../store/slices/cartSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
+import { syncAuthenticatedCart } from "@/lib/syncAuthenticatedCart";
 
 function ProductCard({ product }) {
   const {
@@ -23,6 +24,8 @@ function ProductCard({ product }) {
     stock = 0,
   } = product;
   const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+
   const discount =
     originalPrice > price
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
@@ -36,6 +39,9 @@ function ProductCard({ product }) {
         quantity: 1,
       }),
     );
+    if (isAuthenticated) {
+      syncAuthenticatedCart();
+    }
     toast.success("Product added to cart");
   };
   const isOutOfStock = product?.stock <= 0;

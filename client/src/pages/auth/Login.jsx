@@ -3,11 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import AuthLayout from "../../components/auth/AuthLayout";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { loginSchema } from "../../validators/authValidators";
-import { loginUser } from "../../services/authService";
+
+import { useDispatch } from "react-redux";
+import { login } from "../../store/slices/authSlice";
+import AuthLayout from "@/components/layout/AuthLayout";
+import { loginWithEmailSchema } from "@/validators/authValidators";
+import { syncCartWithServer } from "@/lib/syncCart";
 
 function GoogleIcon() {
   return (
@@ -34,6 +37,7 @@ function GoogleIcon() {
 
 function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -60,7 +64,7 @@ function Login() {
   const onSubmit = async (event) => {
     event.preventDefault();
 
-    const result = loginSchema.safeParse(formData);
+    const result = loginWithEmailSchema.safeParse(formData);
 
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
@@ -76,15 +80,13 @@ function Login() {
     try {
       setLoading(true);
 
-      const response = await loginUser(result.data);
-
-      toast.success(response.message || "Login successful.");
+      await dispatch(login(result.data)).unwrap();
+      toast.success("Login successful.");
+      await syncCartWithServer();
 
       navigate("/");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Unable to sign in. Please try again.",
-      );
+      toast.error(error || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }

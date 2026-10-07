@@ -44,4 +44,11 @@ export const logoutAllSessions = async () => {
   const response = await api.post("/auth/logout-all");
   return response.data;
 };
- 
+export const changePassword = async (data) => {
+  const response = await api.patch("/auth/change-password", data);
+  return response.data;
+};
+export const getActiveSessions = async () => {
+  const response = await api.get("/auth/active-sessions");
+  return response.data;
+};

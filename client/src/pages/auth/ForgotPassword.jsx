@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "@/components/layout/AuthLayout";
 import {
   InputOTP,
   InputOTPGroup,
@@ -240,8 +240,12 @@ function ForgotPassword() {
               disabled={loading || resending}
             />
 
-            {errors.newPassword && (
+            {errors.newPassword ? (
               <p className="text-sm text-destructive">{errors.newPassword}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters with uppercase, lowercase, and a number.
+              </p>
             )}
           </div>
 

@@ -10,6 +10,12 @@ import Checkout from "../pages/Checkout";
 import Register from "@/pages/auth/Register";
 import VerifyEmail from "@/pages/auth/VerifyEmail";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ProtectedRoute from "@/pages/auth/ProtectedRoute";
+import AccountLayout from "@/pages/account/AccountLayout";
+import AccountOverview from "@/pages/account/Order";
+import Profile from "@/pages/account/Profile";
+import Security from "@/pages/account/Security";
+import Sessions from "@/pages/account/Sessions";
 // import ResetPassword from "@/pages/auth/ResetPassword";
 
 function AppRoutes() {
@@ -28,7 +34,16 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      {/* <Route path="/reset-password" element={<ResetPassword />} /> */}
+      {/* <Route path="/reset-password" element={<ResetPassword />} /> no use*/}
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/account" element={<AccountLayout />}>
+          <Route index element={<AccountOverview />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="security" element={<Security />} />
+          <Route path="sessions" element={<Sessions />} />
+        </Route>
+      </Route>
 
       <Route path="*" element={<NotFound />} />
     </Routes>

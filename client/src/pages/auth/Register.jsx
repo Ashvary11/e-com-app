@@ -2,12 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-import AuthLayout from "../../components/auth/AuthLayout";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { registerSchema } from "../../validators/authValidators";
 import { registerUser } from "../../services/authService";
+import AuthLayout from "@/components/layout/AuthLayout";
 
 function GoogleIcon() {
   return (
@@ -77,6 +76,7 @@ function Register() {
 
     try {
       setLoading(true);
+      setErrors({});
       const response = await registerUser(result.data);
       toast.success(response.message || "Verify Account");
       navigate("/verify-email", {
@@ -85,10 +85,17 @@ function Register() {
         },
       });
     } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          "Unable to create your account. Please try again.",
-      );
+      const data = error.response?.data || {};
+      const backendErrors = data.errors || {};
+      if (backendErrors.name || backendErrors.email || backendErrors.password) {
+        setErrors({
+          name: backendErrors.name || "",
+          email: backendErrors.email || "",
+          password: backendErrors.password || "",
+        });
+      } else {
+        toast.error(data.message || "Unable to create your account.");
+      }
     } finally {
       setLoading(false);
     }
@@ -172,8 +179,12 @@ function Register() {
             disabled={loading}
           />
 
-          {errors.password && (
+          {errors.password ? (
             <p className="text-sm text-destructive">{errors.password}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters with uppercase, lowercase, and a number.
+            </p>
           )}
         </div>
 

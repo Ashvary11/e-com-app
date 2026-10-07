@@ -14,10 +14,12 @@ import {
   removeFromCart,
   // clearCart,
 } from "../store/slices/cartSlice";
+import { syncAuthenticatedCart } from "@/lib/syncAuthenticatedCart";
 
 function Cart() {
   const dispatch = useDispatch();
 
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const cartItems = useSelector((state) => state.cart.items);
 
   const subtotal = cartItems.reduce(
@@ -25,16 +27,40 @@ function Cart() {
     0,
   );
 
-  const handleRemove = (id) => {
-    dispatch(removeFromCart(id));
-    toast.success("Item removed from cart");
-  };
+  // const handleRemove = (id) => {
+  //   dispatch(removeFromCart(id));
+  //   toast.success("Item removed from cart");
+  // };
 
   // const handleClearCart = () => {
   //   dispatch(clearCart());
   //   toast.success("Cart cleared");
   // };
+  const handleIncrease = (id) => {
+    dispatch(increaseQuantity(id));
 
+    if (isAuthenticated) {
+      syncAuthenticatedCart();
+    }
+  };
+
+  const handleDecrease = (id) => {
+    dispatch(decreaseQuantity(id));
+
+    if (isAuthenticated) {
+      syncAuthenticatedCart();
+    }
+  };
+
+  const handleRemove = (id) => {
+    dispatch(removeFromCart(id));
+
+    if (isAuthenticated) {
+      syncAuthenticatedCart();
+    }
+
+    toast.success("Item removed from cart");
+  };
   return (
     <Container>
       <section className="py-8 sm:py-12">
@@ -99,7 +125,7 @@ function Cart() {
                         </div>
 
                         <Button
-                          asChild
+                         
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemove(item._id)}
@@ -113,11 +139,11 @@ function Cart() {
                         {/* Quantity */}
                         <div className="flex items-center rounded-md border">
                           <Button
-                            asChild
+                           
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => dispatch(decreaseQuantity(item._id))}
+                            onClick={() => handleDecrease(item._id)}
                             disabled={item.quantity <= 1}
                           >
                             <Minus className="h-4 w-4" />
@@ -128,11 +154,11 @@ function Cart() {
                           </span>
 
                           <Button
-                            asChild
+                            
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => dispatch(increaseQuantity(item._id))}
+                            onClick={() => handleIncrease(item._id)}
                             disabled={item.quantity >= item.stock}
                           >
                             <Plus className="h-4 w-4" />

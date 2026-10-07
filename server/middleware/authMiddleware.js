@@ -39,10 +39,17 @@ export const authMiddleware = async (req, res, next) => {
         userId: uid,
         revokedAt: null,
         expiresAt: { $gt: new Date() },
-      }),
-      User.findById(uid),
+      }).select("sessionId"),
+      User.findById(uid).select("name email role isActive isBlocked"),
+      ,
     ]);
 
+    if (!session) {
+      return res.status(401).json({
+        success: false,
+        message: "Session expired or revoked.",
+      });
+    }
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -58,10 +65,13 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     req.user = {
-      userId: user._id,
-      sessionId: session.sessionId,
+      id: user._id,
+      name: user.name,
+      email: user.email,
       role: user.role,
-      user,  //=this is whole user Obj
+      sessionId: session.sessionId,
+      isActive: user.isActive,
+      isBlocked: user.isBlocked,
     };
 
     next();

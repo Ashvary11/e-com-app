@@ -23,6 +23,7 @@ import {
   userRegistrationFn,
 } from "../services/authService.js";
 import { sendEmail } from "../utils/email/sendEmail.js";
+import { handleError, throwError } from "../utils/errors.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -50,55 +51,29 @@ export const registerEmailUser = async (req, res) => {
     const reqBody = registerSchema.safeParse(req.body);
 
     if (!reqBody.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid registration data.",
-        errors: reqBody.error.flatten().fieldErrors,
-      });
+      throwError(
+        "Validation failed.",
+        400,
+        reqBody.error.flatten().fieldErrors,
+      );
     }
 
     const { name, email, password } = reqBody.data;
 
-    const { user, otp } = await userRegistrationFn({
+    const { otp } = await userRegistrationFn({
       name,
       email,
       password,
     });
-    await sendEmail("verifyMail", { name, otp }, email) 
-   
+
+    await sendEmail("verifyMail", otp, email);
 
     return res.status(201).json({
       success: true,
-      message: "Please verify your email.",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-        otp: otp, //remove later
-      },
+      message: "OTP Sent | Please verify your email.",
     });
-
-    // handle duplicate user later. /fake user
   } catch (error) {
-    console.error("Register error:", error);
-
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists.",
-      });
-    }
-
-    return res.status(error.statusCode || 500).json({
-      success: false,
-      message:
-        error.statusCode === 409
-          ? error.message
-          : "Something went wrong while creating your account.",
-    });
+    return handleError(error, res);
   }
 };
 export const verifyEmail = async (req, res) => {
@@ -113,10 +88,8 @@ export const verifyEmail = async (req, res) => {
       });
     }
 
-    // in frontend dont manually fill email insted used that same email when registerd and show only otp fill screen.
     const { otp, email } = reqBody.data;
     const user = await emailVerificationFn(otp, email);
-    //------------------
 
     if (user.isEmailVerified) {
       // Create a new login session.
@@ -125,7 +98,9 @@ export const verifyEmail = async (req, res) => {
         userAgent: req.get("user-agent"),
         ipAddress: req.ip,
       });
+
       await sendEmail("welcomeMail", user, user.email);
+
       return res
         .cookie("accessToken", jwtToken, jwtCookieOptions)
         .cookie("refreshToken", refreshToken, refreshCookieOptions)
@@ -133,43 +108,37 @@ export const verifyEmail = async (req, res) => {
         .json({
           success: true,
           message: "Email verified successfully.",
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            role: user.role,
-            isEmailVerified: user.isEmailVerified,
-            jwtToken, //remove later
-          },
+          // user: {
+          //   id: user._id,
+          //   name: user.name,
+          //   email: user.email,
+          //   avatar: user.avatar,
+          //   role: user.role,
+          //   isEmailVerified: user.isEmailVerified,
+          // },
         });
     }
   } catch (error) {
-    console.error("Verify email error:", error);
-
-    if (error.statusCode === 400) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while verifying your email.",
-    });
+    return handleError(error, res);
   }
 };
+export const me = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      user: req.user,
+    });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+
 export const resendEmailOtp = async (req, res) => {
   try {
     const reqBody = verifyEmailOnlySchema.safeParse(req.body);
 
     if (!reqBody.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or Otp",
-        errors: reqBody.error.flatten().fieldErrors,
-      });
+      throwError("Invalid email or Otp.", 400);
     }
 
     const { email } = reqBody.data;
@@ -189,28 +158,13 @@ export const resendEmailOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message:
-        "If the account is not verified, a new verification email will be sent.",
-      otp,
+      message: "Please verify your account using the OTP sent to your email.",
     });
   } catch (error) {
-    console.error("Resend verification error:", error);
-
-    if (error.statusCode === 400) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while resending the verification email.",
-    });
+    return handleError(error, res);
   }
 };
 
-// after email verify auto login and set cookies
 export const emailLogin = async (req, res) => {
   try {
     const reqBody = loginWithEmailSchema.safeParse(req.body);
@@ -231,7 +185,8 @@ export const emailLogin = async (req, res) => {
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
     });
-    sendEmail("newLoginMail", user, email);
+    // sendEmail("newLoginMail", user, email);
+
     return res
       .cookie("accessToken", jwtToken, jwtCookieOptions)
       .cookie("refreshToken", refreshToken, refreshCookieOptions)
@@ -239,36 +194,9 @@ export const emailLogin = async (req, res) => {
       .json({
         success: true,
         message: "Login successful.",
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar,
-          role: user.role,
-          isEmailVerified: user.isEmailVerified,
-        },
       });
   } catch (error) {
-    console.error("Login error:", error);
-
-    if (error.statusCode === 401) {
-      return res.status(401).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    if (error.statusCode === 403) {
-      return res.status(403).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while logging in.",
-    });
+    return handleError(error, res);
   }
 };
 export const forgotPassword = async (req, res) => {
@@ -293,16 +221,9 @@ export const forgotPassword = async (req, res) => {
       success: true,
       message:
         "We have received a request for reset-password, An otp has been sended",
-      otp, // remove later
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Something went wrong while processing the password reset request.",
-    });
+    return handleError(error, res);
   }
 };
 export const resetPassword = async (req, res) => {
@@ -332,110 +253,10 @@ export const resetPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successfully. Please log in again.",
+      message: "Password reset successfully.",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
-
-    if (error.statusCode === 400) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while resetting your password.",
-    });
-  }
-};
-export const logout = async (req, res) => {
-  try {
-    await logoutFn(req.user.userId, req.user.sessionId);
-
-    res.clearCookie("accessToken", jwtCookieOptions);
-    res.clearCookie("refreshToken", refreshCookieOptions);
-
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully.",
-    });
-  } catch (error) {
-    console.error("Logout error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while logging out.",
-    });
-  }
-};
-export const logoutFromEverywhere = async (req, res) => {
-  try {
-    await logoutAllSessionsFn(req.user.userId);
-
-    res.clearCookie("accessToken", jwtCookieOptions);
-    res.clearCookie("refreshToken", refreshCookieOptions);
-
-    return res.status(200).json({
-      success: true,
-      message: "Logged out from all sessions successfully.",
-    });
-  } catch (error) {
-    console.error("Logout all error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while logging out from all sessions.",
-    });
-  }
-};
-
-export const me = async (req, res) => {
-  // no need to call db becuse we are fetching user data from jwt token.
-  return res.status(200).json({
-    success: true,
-    user: {
-      id: req.user.userId,
-      name: req.user.user.name,
-      email: req.user.user.email,
-      avatar: req.user.user.avatar,
-      role: req.user.user.role,
-      isEmailVerified: req.user.user.isEmailVerified,
-    },
-  });
-};
-
-// handle this with care add two step email deletion also later, and
-// also delete user order his cart and wishlist.
-// save user ac for 30 days and isACtive === false and set deactivatedAt.
-// and after 30 days delete user account.
-export const deleteAccount = async (req, res) => {
-  try {
-    await deleteUserAccountFn(req.user.userId);
-
-    res.clearCookie("accessToken", jwtCookieOptions);
-    res.clearCookie("refreshToken", refreshCookieOptions);
-
-    await sendEmail("accountDeletedMail", {}, req.user.email);
-    return res.status(200).json({
-      success: true,
-      message: "Your account has been deleted successfully.",
-    });
-  } catch (error) {
-    console.error("Delete account error:", error);
-
-    if (error.statusCode === 404) {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while deleting your account.",
-    });
+    return handleError(error, res);
   }
 };
 export const changePassword = async (req, res) => {
@@ -453,11 +274,12 @@ export const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = reqBody.data;
 
     const user = await changePasswordFn({
-      userId: req.user.userId,
+      userId: req.user.id,
       currentPassword,
       newPassword,
       currentSessionId: req.user.sessionId,
     });
+    
     sendEmail("passwordResetSuccessMail", { user }, user.email);
 
     return res.status(200).json({
@@ -466,14 +288,54 @@ export const changePassword = async (req, res) => {
         "Password changed successfully. Other sessions have been logged out.",
     });
   } catch (error) {
-    console.error("Change password error:", error);
+    return handleError(error, res);
+  }
+};
+export const logout = async (req, res) => {
+  try {
+    await logoutFn(req.user.id, req.user.sessionId);
 
-    return res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.statusCode
-        ? error.message
-        : "Something went wrong while changing your password.",
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully.",
     });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+export const logoutFromEverywhere = async (req, res) => {
+  try {
+    await logoutAllSessionsFn(req.user.id);
+
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out from all sessions successfully.",
+    });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    await deleteUserAccountFn(req.user.id);
+
+    res.clearCookie("accessToken", jwtCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
+
+    await sendEmail("accountDeletedMail", {}, req.user.email);
+    return res.status(200).json({
+      success: true,
+      message: "Your account has been deleted successfully.",
+    });
+  } catch (error) {
+    return handleError(error, res);
   }
 };
 
@@ -502,23 +364,14 @@ export const refreshToken = async (req, res) => {
         },
       });
   } catch (error) {
-    console.error("Refresh token error:", error);
-
-    // Clear cookies so the client stops retrying with a dead token
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
-
-    return res.status(error.statusCode || 401).json({
-      success: false,
-      message: error.message || "Could not refresh session.",
-    });
+    return handleError(error, res);
   }
 };
 export const getActiveSessions = async (req, res) => {
   try {
-    const userId = req.user.userId.toString();
-    // console.log(userId, "----------------");
-
+    const userId = req.user.id.toString();
     const sessions = await getActiveSessionsFn(userId);
 
     return res.status(200).json({
@@ -527,9 +380,6 @@ export const getActiveSessions = async (req, res) => {
       data: sessions,
     });
   } catch (error) {
-    return res.status(error.statusCode || 401).json({
-      success: false,
-      message: error.message || "Something went wrong finding sessions",
-    });
+    return handleError(error, res);
   }
 };

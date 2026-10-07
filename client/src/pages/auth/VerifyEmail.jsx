@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner"; 
-import AuthLayout from "../../components/auth/AuthLayout";
+import { toast } from "sonner";
+import AuthLayout from "@/components/layout/AuthLayout";
 import { Button } from "../../components/ui/button";
 import {
   InputOTP,
@@ -11,11 +11,14 @@ import {
 } from "../../components/ui/input-otp";
 import { resendVerification, verifyEmail } from "../../services/authService";
 import { verifyEmailSchema } from "../../validators/authValidators";
+import { fetchMe } from "../../store/slices/authSlice";
+import { useDispatch } from "react-redux";
+import { syncCartWithServer } from "@/lib/syncCart";
 
 function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const dispatch = useDispatch();
   const email = location.state?.email || "";
 
   const [otp, setOtp] = useState("");
@@ -40,15 +43,13 @@ function VerifyEmail() {
       setLoading(true);
       setError("");
 
-      const response = await verifyEmail(result.data);
-
+      const response = await verifyEmail(result.data); 
       toast.success(response.message || "Email verified successfully.");
 
-      navigate("/login", {
-        state: {
-          email,
-        },
-      });
+      await dispatch(fetchMe()).unwrap();
+      await syncCartWithServer();
+
+      navigate("/", { replace: true });
     } catch (error) {
       setError(
         error.response?.data?.message ||

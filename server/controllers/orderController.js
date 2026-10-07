@@ -142,7 +142,7 @@ export const createOrder = async (req, res) => {
     // After auth:
     // const userId = req.user._id;
 
-    const userId = req.user?._id || null;
+    const userId = req.user?.id || null;
 
     // --------------------------------
     // Create order

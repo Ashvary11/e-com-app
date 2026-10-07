@@ -21,7 +21,3 @@ store.subscribe(() => {
     JSON.stringify(store.getState().cart),
   );
 });
-// authSlice
-// cartSlice
-// productSlice
-// orderSlice

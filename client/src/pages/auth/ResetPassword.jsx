@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "@/components/layout/AuthLayout";
 import {
   InputOTP,
   InputOTPGroup,
@@ -104,7 +103,7 @@ function ResetPassword() {
       description="Enter the reset code sent to your email and create a new password."
       footer={
         <>
-          Remember your password?{" "}
+          Remember your password?
           <Link
             to="/login"
             className="font-medium text-foreground underline-offset-4 hover:underline"
@@ -181,8 +180,12 @@ function ResetPassword() {
             disabled={loading}
           />
 
-          {errors.newPassword && (
+          {errors.newPassword ? (
             <p className="text-sm text-destructive">{errors.newPassword}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters with uppercase, lowercase, and a number.
+            </p>
           )}
         </div>
 
