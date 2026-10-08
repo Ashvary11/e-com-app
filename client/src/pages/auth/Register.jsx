@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,9 @@ import { Input } from "../../components/ui/input";
 import { registerSchema } from "../../validators/authValidators";
 import { registerUser } from "../../services/authService";
 import AuthLayout from "@/components/layout/AuthLayout";
+import { useDispatch } from "react-redux";
+import { syncCartWithServer } from "@/lib/syncCart";
+import { googleLogin } from "@/store/slices/authSlice";
 
 function GoogleIcon() {
   return (
@@ -33,6 +36,8 @@ function GoogleIcon() {
 
 function Register() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const googleButtonRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -101,6 +106,43 @@ function Register() {
     }
   };
 
+  const handleGoogleSignup = async (response) => {
+    try {
+      await dispatch(googleLogin(response.credential)).unwrap();
+
+      toast.success(
+        response.isNewUser
+          ? "Google account created successfully."
+          : "Signed in with Google.",
+      );
+
+      await syncCartWithServer();
+
+      navigate("/");
+    } catch (error) {
+      toast.error(error || "Unable to sign up with Google.");
+    }
+  };
+
+  useEffect(() => {
+    if (!window.google?.accounts?.id || !googleButtonRef.current) {
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: handleGoogleSignup,
+    });
+
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      width: 400,
+      text: "signup",
+    });
+  }, []);
+
   return (
     <AuthLayout
       title="Create an account"
@@ -138,7 +180,6 @@ function Register() {
             <p className="text-sm text-destructive">{errors.name}</p>
           )}
         </div>
-
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium leading-none">
             Email
@@ -159,7 +200,6 @@ function Register() {
             <p className="text-sm text-destructive">{errors.email}</p>
           )}
         </div>
-
         <div className="space-y-2">
           <label
             htmlFor="password"
@@ -187,13 +227,11 @@ function Register() {
             </p>
           )}
         </div>
-
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 
           {loading ? "Creating account..." : "Create account"}
         </Button>
-
         <div className="relative py-1">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -206,18 +244,23 @@ function Register() {
           </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          disabled={loading}
-          onClick={() => {
-            toast.info("Google sign-up will be available soon.");
-          }}
-        >
-          <GoogleIcon />
-          Continue with Google
-        </Button>
+        <div className="relative w-full">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={loading}
+          >
+            <GoogleIcon />
+            Sign up with Google
+          </Button>
+
+          <div
+            ref={googleButtonRef}
+            className="absolute inset-0 flex w-full justify-center overflow-hidden opacity-0"
+            aria-hidden="true"
+          />
+        </div>
       </form>
     </AuthLayout>
   );

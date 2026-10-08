@@ -2,11 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   getActiveSessions,
   getMe,
+  googleLoginUser,
   loginUser,
   logoutAllSessions,
   logoutUser,
 } from "../../services/authService";
-// import { syncCartWithServer } from "@/lib/syncCart";
 
 export const fetchMe = createAsyncThunk(
   "auth/fetchMe",
@@ -28,9 +28,6 @@ export const login = createAsyncThunk(
     try {
       const response = await loginUser(credentials);
 
-      // if (response.user) return response.user;
-      // const me = await getMe();
-      // return me.user;
       let user;
 
       if (response.user) {
@@ -40,9 +37,7 @@ export const login = createAsyncThunk(
         user = me.user;
       }
 
-      // await syncCartWithServer();
       return user;
-
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Unable to sign in.",
@@ -50,7 +45,32 @@ export const login = createAsyncThunk(
     }
   },
 );
+export const googleLogin = createAsyncThunk(
+  "auth/googleLogin",
+  async (credential, { rejectWithValue }) => {
+    try {
+      const response = await googleLoginUser(credential);
 
+      let user;
+
+      if (response.user) {
+        user = response.user;
+      } else {
+        const me = await getMe();
+        user = me.user;
+      }
+
+      return {
+        user,
+        isNewUser: response.isNewUser,
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Unable to sign in with Google.",
+      );
+    }
+  },
+);
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
@@ -154,6 +174,17 @@ const authSlice = createSlice({
       })
       .addCase(logoutAll.fulfilled, (state) => {
         state.sessions = [];
+      })
+      .addCase(googleLogin.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
+        state.loading = false;
+      })
+      .addCase(googleLogin.rejected, (state) => {
+        state.loading = false;
       });
   },
 });

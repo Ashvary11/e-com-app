@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Session from "../models/Session.js";
+import AuthIdentity from "../models/AuthIdentity.js";
 
 import {
   hashPassword,
@@ -13,6 +14,7 @@ import {
 import { generateJwtToken } from "../utils/jwt.js";
 import { parseUserAgent } from "../utils/parseUserAgent.js";
 import { throwError } from "../utils/errors.js";
+import { verifyGoogleToken } from "./googleAuthService.js";
 
 export const REFRESH_TOKEN_DAYS = Number(
   process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || 30,
@@ -458,4 +460,82 @@ export const getActiveSessionsFn = async (userId) => {
       createdAt: 1,
     },
   ).sort({ lastUsedAt: -1 });
+};
+
+export const googleLoginFn = async ({ credential, userAgent, ipAddress }) => {
+  const googleUser = await verifyGoogleToken(credential);
+
+  if (!googleUser.emailVerified) {
+    throwError("Google email is not verified.", 401);
+  }
+
+  let authIdentity = await AuthIdentity.findOne({
+    provider: "google",
+    providerAccountId: googleUser.providerAccountId,
+  });
+
+  let user;
+  let isNewUser = false;
+
+  if (authIdentity) {
+    user = await User.findById(authIdentity.userId);
+    if (!user) {
+      throwError("User account not found.", 404);
+    }
+
+    authIdentity.lastUsedAt = new Date();
+    await authIdentity.save();
+  } else {
+    user = await User.findOne({ email: googleUser.email });
+
+    if (user) {
+      if (!user.isActive || user.isBlocked) {
+        throwError("Account Inactive / Blocked.", 403);
+      }
+
+      authIdentity = await AuthIdentity.create({
+        userId: user._id,
+        provider: "google",
+        providerAccountId: googleUser.providerAccountId,
+        email: googleUser.email,
+        username: googleUser.name,
+        profileUrl: googleUser.avatar,
+      });
+    } else {
+      user = await User.create({
+        name: googleUser.name,
+        email: googleUser.email,
+        avatar: googleUser.avatar,
+        password: null,
+        role: "user",
+        isEmailVerified: true,
+      });
+      let isNewUser = true; //just for alert in client
+      authIdentity = await AuthIdentity.create({
+        userId: user._id,
+        provider: "google",
+        providerAccountId: googleUser.providerAccountId,
+        email: googleUser.email,
+        username: googleUser.name,
+        profileUrl: googleUser.avatar,
+      });
+    }
+  }
+
+  if (!user.isActive || user.isBlocked) {
+    throwError("Account Inactive / Blocked.", 403);
+  }
+
+  const { jwtToken, refreshToken } = await createUserSession({
+    user,
+    userAgent,
+    ipAddress,
+  });
+
+  return {
+    user,
+    jwtToken,
+    refreshToken,
+    isNewUser,
+  };
 };

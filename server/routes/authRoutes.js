@@ -14,6 +14,7 @@ import {
   changePassword,
   refreshToken,
   getActiveSessions,
+  googleLogin,
 } from "../controllers/authController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -25,9 +26,11 @@ const router = express.Router();
 router.post("/register", registerEmailUser);
 router.post("/verify-email", verifyEmail);
 router.post("/resend-verification", resendEmailOtp);
-router.post("/login", emailLogin);
 
-router.post("/forgot-password", forgotPassword); //two time reuse 
+router.post("/login", emailLogin);
+router.post("/google", googleLogin);
+
+router.post("/forgot-password", forgotPassword); //two time reuse
 router.post("/reset-password", resetPassword);
 
 router.patch("/change-password", authMiddleware, changePassword);

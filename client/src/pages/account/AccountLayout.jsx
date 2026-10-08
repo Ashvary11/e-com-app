@@ -1,9 +1,12 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import Container from "../../components/layout/Container";
 
 import { cn } from "../../lib/utils";
 import { Separator } from "../../components/ui/separator";
 import { LogOut, LockKeyhole, Monitor, UserRound } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { toast } from "sonner";
+import { logout } from "@/store/slices/authSlice";
 
 const accountLinks = [
   {
@@ -30,6 +33,20 @@ const accountLinks = [
 ];
 
 function AccountLayout() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+
+      toast.success("Logged out successfully.");
+      navigate("/");
+    } catch (error) {
+      toast.error(error || "Unable to logout.");
+    }
+  };
+
   return (
     <Container>
       <div className="py-6 sm:py-8">
@@ -72,6 +89,7 @@ function AccountLayout() {
 
               <button
                 type="button"
+                onClick={handleLogout}
                 className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
               >
                 <LogOut className="size-4" />

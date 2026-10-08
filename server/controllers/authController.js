@@ -15,6 +15,7 @@ import {
   emailVerificationFn,
   forgotPasswordFn,
   getActiveSessionsFn,
+  googleLoginFn,
   logoutAllSessionsFn,
   logoutFn,
   refreshSessionFn,
@@ -379,6 +380,33 @@ export const getActiveSessions = async (req, res) => {
       count: sessions.length,
       data: sessions,
     });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+export const googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      throwError("Google credential is required.", 400);
+    }
+
+    const { user, jwtToken, refreshToken ,isNewUser} = await googleLoginFn({
+      credential,
+      userAgent: req.get("user-agent"),
+      ipAddress: req.ip,
+    });
+
+    return res
+      .cookie("accessToken", jwtToken, jwtCookieOptions)
+      .cookie("refreshToken", refreshToken, refreshCookieOptions)
+      .status(200)
+      .json({
+        success: true,
+        message: "Google login successful.",
+        isNewUser
+      });
   } catch (error) {
     return handleError(error, res);
   }

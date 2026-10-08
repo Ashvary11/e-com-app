@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +7,8 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 
 import { useDispatch } from "react-redux";
-import { login } from "../../store/slices/authSlice";
+import { googleLogin, login } from "../../store/slices/authSlice";
+
 import AuthLayout from "@/components/layout/AuthLayout";
 import { loginWithEmailSchema } from "@/validators/authValidators";
 import { syncCartWithServer } from "@/lib/syncCart";
@@ -38,6 +39,9 @@ function GoogleIcon() {
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const googleButtonRef = useRef(null);
+  const googleInitializedRef = useRef(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -81,7 +85,9 @@ function Login() {
       setLoading(true);
 
       await dispatch(login(result.data)).unwrap();
+
       toast.success("Login successful.");
+
       await syncCartWithServer();
 
       navigate("/");
@@ -91,6 +97,66 @@ function Login() {
       setLoading(false);
     }
   };
+
+  const handleGoogleLogin = async (response) => {
+    try {
+      await dispatch(googleLogin(response.credential)).unwrap();
+
+      toast.success("Google login successful.");
+
+      await syncCartWithServer();
+
+      navigate("/");
+    } catch (error) {
+      toast.error(error || "Unable to sign in with Google.");
+    }
+  };
+
+  useEffect(() => {
+    if (googleInitializedRef.current) {
+      return;
+    }
+
+    const initializeGoogle = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) {
+        return false;
+      }
+
+      if (googleInitializedRef.current) {
+        return true;
+      }
+
+      googleInitializedRef.current = true;
+
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleGoogleLogin,
+      });
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        width: 400,
+      });
+
+      return true;
+    };
+
+    if (initializeGoogle()) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (initializeGoogle()) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <AuthLayout
@@ -165,7 +231,6 @@ function Login() {
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-
           {loading ? "Signing in..." : "Sign in"}
         </Button>
 
@@ -181,18 +246,25 @@ function Login() {
           </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          disabled={loading}
-          onClick={() => {
-            toast.info("Google sign-in will be available soon.");
-          }}
-        >
-          <GoogleIcon />
-          Continue with Google
-        </Button>
+        <div className="relative w-full">
+          
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={loading}
+          >
+            <GoogleIcon />
+            Sign in with Google
+          </Button>
+
+          {/* Google's real authentication button */}
+          <div
+            ref={googleButtonRef}
+            className="absolute inset-0 flex w-full justify-center overflow-hidden opacity-0"
+            aria-hidden="true"
+          />
+        </div>
       </form>
     </AuthLayout>
   );
