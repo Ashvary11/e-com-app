@@ -6,6 +6,7 @@ import {
   resetPasswordSchema,
   forgotPasswordSchema,
   changePasswordSchema,
+  setPasswordSchema,
 } from "../validators/authValidator.js";
 import {
   changePasswordFn,
@@ -21,6 +22,7 @@ import {
   refreshSessionFn,
   resendEmailOtpFn,
   resetPasswordFn,
+  setPasswordFn,
   userRegistrationFn,
 } from "../services/authService.js";
 import { sendEmail } from "../utils/email/sendEmail.js";
@@ -384,6 +386,7 @@ export const getActiveSessions = async (req, res) => {
     return handleError(error, res);
   }
 };
+
 export const googleLogin = async (req, res) => {
   try {
     const { credential } = req.body;
@@ -407,6 +410,37 @@ export const googleLogin = async (req, res) => {
         message: "Google login successful.",
         isNewUser
       });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+
+export const setPassword = async (req, res) => {
+  try {
+    const reqBody = setPasswordSchema.safeParse(req.body);
+
+    if (!reqBody.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid password setup data.",
+        errors: reqBody.error.flatten().fieldErrors,
+      });
+    }
+
+    const { newPassword, confirmPassword } = reqBody.data;
+
+    const user = await setPasswordFn({
+      userId: req.user.id,
+      newPassword,
+      confirmPassword,
+      currentSessionId: req.user.sessionId,
+    });
+ 
+    return res.status(200).json({
+      success: true,
+      message: "Password set successfully.",
+    });
+    
   } catch (error) {
     return handleError(error, res);
   }

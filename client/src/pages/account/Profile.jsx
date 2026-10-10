@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
-import { Mail, UserRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Mail, UserRound, ShieldAlert } from "lucide-react";
 
 import {
   Card,
@@ -8,10 +9,14 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 
 function Profile() {
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+
   const isPrivilegedRole = user?.role && user.role !== "user";
+  const needsPassword = user?.hasPassword === false;
 
   return (
     <div className="space-y-6">
@@ -21,6 +26,31 @@ function Profile() {
           View your CartSphere account information.
         </p>
       </div>
+
+      {needsPassword && (
+        <Card className="border-amber-500/40">
+          <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-600" />
+
+              <div>
+                <p className="font-medium">Secure your account</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  You haven't set a password yet. Set one to enable
+                  password-based sign-in to your CartSphere account.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              className="shrink-0"
+              onClick={() => navigate("/account/security")}
+            >
+              Set password
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -67,7 +97,7 @@ function Profile() {
 
             {isPrivilegedRole && (
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Role</p> 
+                <p className="text-sm text-muted-foreground">Role</p>
                 <div className="mt-2">
                   <Badge variant="secondary">{user.role}</Badge>
                 </div>

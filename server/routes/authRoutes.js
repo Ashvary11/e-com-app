@@ -15,6 +15,7 @@ import {
   refreshToken,
   getActiveSessions,
   googleLogin,
+  setPassword,
 } from "../controllers/authController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -34,6 +35,7 @@ router.post("/forgot-password", forgotPassword); //two time reuse
 router.post("/reset-password", resetPassword);
 
 router.patch("/change-password", authMiddleware, changePassword);
+router.patch("/set-password", authMiddleware, setPassword);
 
 router.post("/logout", authMiddleware, logout);
 router.post("/logout-all", authMiddleware, logoutFromEverywhere);

@@ -92,3 +92,14 @@ export const changePasswordSchema = z
 //    .refine() calls do:
 // First one ensures newPassword === confirmPassword
 // Second one prevents the user from "changing" to the same password
+export const setPasswordSchema = z
+  .object({
+    newPassword: passwordSchema,
+    confirmPassword: z
+      .string({ required_error: "Please confirm your new password" })
+      .min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });

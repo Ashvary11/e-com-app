@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,8 +11,11 @@ import {
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { changePassword } from "../../services/authService";
-import { changePasswordSchema } from "../../validators/authValidators";
+import { changePassword, setPassword } from "../../services/authService";
+import {
+  changePasswordSchema,
+  setPasswordSchema,
+} from "../../validators/authValidators";
 
 function PasswordField({ label, name, value, onChange, placeholder }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +42,7 @@ function PasswordField({ label, name, value, onChange, placeholder }) {
 
         <button
           type="button"
-          onClick={() => setShowPassword((value) => !value)}
+          onClick={() => setShowPassword((previous) => !previous)}
           className="absolute right-0 top-0 flex h-full w-10 items-center justify-center text-muted-foreground hover:text-foreground"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
@@ -54,6 +58,8 @@ function PasswordField({ label, name, value, onChange, placeholder }) {
 }
 
 function Security() {
+  const { user } = useSelector((state) => state.auth);
+  const [hasPassword, setHasPassword] = useState(user?.hasPassword === true);
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -64,7 +70,8 @@ function Security() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
-    const { name, value } = event.target; 
+    const { name, value } = event.target;
+
     setForm((previous) => ({
       ...previous,
       [name]: value,
@@ -77,12 +84,25 @@ function Security() {
   };
 
   const handleSubmit = async (event) => {
-    event.preventDefault(); 
-    const result = changePasswordSchema.safeParse(form); 
+    event.preventDefault();
+
+    const schema = hasPassword ? changePasswordSchema : setPasswordSchema;
+
+    const dataToValidate = hasPassword
+      ? form
+      : {
+          newPassword: form.newPassword,
+          confirmPassword: form.confirmPassword,
+        };
+
+    const result = schema.safeParse(dataToValidate);
+
     if (!result.success) {
-      const fieldErrors = {}; 
+      const fieldErrors = {};
+
       result.error.issues.forEach((issue) => {
-        const field = issue.path[0]; 
+        const field = issue.path[0];
+
         if (!fieldErrors[field]) {
           fieldErrors[field] = issue.message;
         }
@@ -93,24 +113,43 @@ function Security() {
     }
 
     try {
-      setLoading(true); 
-      const response = await changePassword({
-        currentPassword: form.currentPassword,
-        newPassword: form.newPassword,
-        confirmPassword: form.confirmPassword,
-      });
+      setLoading(true);
 
-      toast.success(response?.message || "Password changed successfully.");
+      const response = hasPassword
+        ? await changePassword({
+            currentPassword: form.currentPassword,
+            newPassword: form.newPassword,
+            confirmPassword: form.confirmPassword,
+          })
+        : await setPassword({
+            newPassword: form.newPassword,
+            confirmPassword: form.confirmPassword,
+          });
+
+      if (!hasPassword) {
+        setHasPassword(true);
+      }
+      
+      toast.success(
+        response?.message ||
+          (hasPassword
+            ? "Password changed successfully."
+            : "Password set successfully."),
+      );
 
       setForm({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-      }); 
+      });
+
       setErrors({});
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Unable to change your password.",
+        error.response?.data?.message ||
+          (hasPassword
+            ? "Unable to change your password."
+            : "Unable to set your password."),
       );
     } finally {
       setLoading(false);
@@ -120,7 +159,7 @@ function Security() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Security</h2> 
+        <h2 className="text-xl font-semibold tracking-tight">Security</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Keep your account secure by using a strong password.
         </p>
@@ -130,24 +169,28 @@ function Security() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LockKeyhole className="size-5" />
-            Change password
+            {hasPassword ? "Change password" : "Set password"}
           </CardTitle>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
-            <PasswordField
-              label="Current password"
-              name="currentPassword"
-              value={form.currentPassword}
-              onChange={handleChange}
-              placeholder="Enter your current password"
-            />
+            {hasPassword && (
+              <>
+                <PasswordField
+                  label="Current password"
+                  name="currentPassword"
+                  value={form.currentPassword}
+                  onChange={handleChange}
+                  placeholder="Enter your current password"
+                />
 
-            {errors.currentPassword && (
-              <p className="-mt-3 text-sm text-destructive">
-                {errors.currentPassword}
-              </p>
+                {errors.currentPassword && (
+                  <p className="-mt-3 text-sm text-destructive">
+                    {errors.currentPassword}
+                  </p>
+                )}
+              </>
             )}
 
             <PasswordField
@@ -179,7 +222,13 @@ function Security() {
             )}
 
             <Button type="submit" disabled={loading}>
-              {loading ? "Changing password..." : "Change password"}
+              {loading
+                ? hasPassword
+                  ? "Changing password..."
+                  : "Setting password..."
+                : hasPassword
+                  ? "Change password"
+                  : "Set password"}
             </Button>
           </form>
         </CardContent>

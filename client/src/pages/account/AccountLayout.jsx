@@ -60,7 +60,8 @@ function AccountLayout() {
         <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
           {/* Navigation */}
           <aside className="h-fit rounded-xl border bg-background">
-            <nav className="flex gap-1 overflow-x-auto p-2 lg:flex-col">
+            {/* <nav className="flex gap-1 overflow-x-auto p-2 lg:flex-col "> */}
+            <nav className="flex flex-nowrap gap-1 overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-col">
               {accountLinks.map((link) => {
                 const Icon = link.icon;
 

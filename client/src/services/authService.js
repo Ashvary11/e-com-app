@@ -58,3 +58,7 @@ export const getActiveSessions = async () => {
   const response = await api.get("/auth/active-sessions");
   return response.data;
 };
+export const setPassword = async (data) => {
+  const response = await api.patch("/auth/set-password", data);
+  return response.data;
+};

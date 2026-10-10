@@ -40,7 +40,9 @@ export const authMiddleware = async (req, res, next) => {
         revokedAt: null,
         expiresAt: { $gt: new Date() },
       }).select("sessionId"),
-      User.findById(uid).select("name email role isActive isBlocked"),
+      User.findById(uid).select(
+        "name email role isActive isBlocked hasPassword ",
+      ),
       ,
     ]);
 
@@ -72,6 +74,7 @@ export const authMiddleware = async (req, res, next) => {
       sessionId: session.sessionId,
       isActive: user.isActive,
       isBlocked: user.isBlocked,
+      hasPassword: user.hasPassword,
     };
 
     next();

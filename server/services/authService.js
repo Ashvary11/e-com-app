@@ -56,6 +56,7 @@ export const userRegistrationFn = async ({ name, email, password }) => {
     isEmailVerified: false,
     emailVerificationOtpHash: hashOtp,
     emailVerificationOtpExpiresAt: otpExpiresAt,
+    hasPassword: true,
   });
 
   return {
@@ -538,4 +539,49 @@ export const googleLoginFn = async ({ credential, userAgent, ipAddress }) => {
     refreshToken,
     isNewUser,
   };
+};
+export const setPasswordFn = async ({
+  userId,
+  newPassword,
+  confirmPassword,
+  currentSessionId,
+}) => {
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throwError("User not found.", 404);
+  }
+
+  if (!user.isActive || user.isBlocked) {
+    throwError("Account inactive or blocked.", 403);
+  }
+
+  // Only accounts without an existing password can use this function.
+  if (user.hasPassword === true || user.password) {
+    throwError(
+      "Your account already has a password. Use Change Password.",
+      400,
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    throwError("Passwords do not match.", 400);
+  }
+
+  user.password = await hashPassword(newPassword);
+  user.hasPassword = true;
+
+  await user.save();
+
+  // Keep the current session active and revoke others .
+  await Session.updateMany(
+    {
+      userId: user._id,
+      revokedAt: null,
+      sessionId: { $ne: currentSessionId },
+    },
+    { $set: { revokedAt: new Date() } },
+  );
+
+  return user;
 };
