@@ -16,6 +16,7 @@ import {
   getActiveSessions,
   googleLogin,
   setPassword,
+  revokeSession,
 } from "../controllers/authController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -45,6 +46,7 @@ router.get("/active-sessions", authMiddleware, getActiveSessions);
 
 router.post("/refresh", refreshToken);
 router.delete("/account-delete", authMiddleware, deleteAccount);
+router.delete("/sessions/:sessionId", authMiddleware, revokeSession);
 
 // ───── Admin routes (same resource, admin endpoints) ─────
 // router.get("/users", authMiddleware, isAuthorizedRole(["admin"]), listUsers);

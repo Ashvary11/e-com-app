@@ -38,10 +38,10 @@ export const createOrderSchema = z.object({
     .min(16, "Invalid idempotency key")
     .max(100, "Invalid idempotency key"),
 
-  items: z
-    .array(orderItemSchema)
-    .min(1, "Order must contain at least one item")
-    .max(50, "Too many items in order"),
+  // items: z
+  //   .array(orderItemSchema)
+  //   .min(1, "Order must contain at least one item")
+  //   .max(50, "Too many items in order"),
 
   shippingAddress: shippingAddressSchema,
 });

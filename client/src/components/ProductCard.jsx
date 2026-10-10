@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { ShoppingCart, Star } from "lucide-react";
 
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardFooter } from "../ui/card";
-import { addToCart, scheduleDbCartUpdate } from "../../store/slices/cartSlice";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardFooter } from "./ui/card";
+import { addToCart, scheduleDbCartUpdate } from "./../store/slices/cartSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 

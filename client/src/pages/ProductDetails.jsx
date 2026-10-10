@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Minus, Plus, ShoppingCart, Star, Zap } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,7 +10,7 @@ import { Card } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 import { Skeleton } from "../components/ui/skeleton";
 import api from "../../src/services/api";
-import { addToCart } from "../store/slices/cartSlice";
+import { addToCart, scheduleDbCartUpdate } from "../store/slices/cartSlice";
 import { useDispatch } from "react-redux";
 
 function ProductDetails() {
@@ -24,6 +24,8 @@ function ProductDetails() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -75,11 +77,13 @@ function ProductDetails() {
         quantity,
       }),
     );
+
+    dispatch(scheduleDbCartUpdate());
     toast.success("Product added to cart");
   };
 
   const handleBuyNow = () => {
-    toast.success("Product Buying..");
+    navigate("/checkout")
   };
 
   if (loading) {

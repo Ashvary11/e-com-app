@@ -1,3 +1,4 @@
+import Cart from "../models/Cart.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import {
@@ -35,6 +36,14 @@ const getOrderResponse = (order) => ({
 
 export const createOrder = async (req, res) => {
   try {
+    const userId = req.user?.id || null;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please log in to place an order",
+      });
+    }
     const validation = createOrderSchema.safeParse(req.body);
 
     if (!validation.success) {
@@ -45,11 +54,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const { email, items, shippingAddress, idempotencyKey } = validation.data;
-
-    // --------------------------------
-    // Idempotency check
-    // --------------------------------
+    const { email, shippingAddress, idempotencyKey } = validation.data;
 
     const existingOrder = await Order.findOne({
       idempotencyKey,
@@ -63,24 +68,19 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // --------------------------------
-    // Prevent duplicate product lines
-    // --------------------------------
+    // The db cart is the source of truth.
+    const cart = await Cart.findOne({ userId }).lean();
 
-    const productIds = items.map((item) => item.productId);
-
-    const uniqueProductIds = new Set(productIds);
-
-    if (uniqueProductIds.size !== productIds.length) {
+    if (!cart || !cart.items?.length) {
       return res.status(400).json({
         success: false,
-        message: "Duplicate product in order",
+        code: "CART_EMPTY",
+        message: "Your cart is empty. Please add products before checkout.",
       });
     }
 
-    // --------------------------------
-    // Fetch products from MongoDB
-    // --------------------------------
+    const cartItems = cart.items;
+    const productIds = cartItems.map((item) => item.productId);
 
     const products = await Product.find({
       _id: {
@@ -95,15 +95,11 @@ export const createOrder = async (req, res) => {
       products.map((product) => [product._id.toString(), product]),
     );
 
-    // --------------------------------
-    // Build order items
-    // --------------------------------
-
     const orderItems = [];
     let subtotal = 0;
 
-    for (const item of items) {
-      const product = productMap.get(item.productId);
+    for (const item of cartItems) {
+      const product = productMap.get(item.productId.toString());
 
       if (!product) {
         return res.status(404).json({
@@ -137,26 +133,11 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // --------------------------------
     // Calculate final amount
     // --------------------------------
 
     const shipping = SHIPPING_CHARGE;
     const total = subtotal + shipping;
-
-    // --------------------------------
-    // User
-    // --------------------------------
-    // Currently guest checkout.
-    //
-    // After auth:
-    // const userId = req.user._id;
-
-    const userId = req.user?.id || null;
-
-    // --------------------------------
-    // Create order
-    // --------------------------------
 
     const order = await Order.create({
       userId,
@@ -181,10 +162,6 @@ export const createOrder = async (req, res) => {
       order: getOrderResponse(order),
     });
   } catch (error) {
-    // --------------------------------
-    // Unique index race condition
-    // --------------------------------
-
     if (error?.code === 11000) {
       const existingOrder = await Order.findOne({
         idempotencyKey: req.body?.idempotencyKey,

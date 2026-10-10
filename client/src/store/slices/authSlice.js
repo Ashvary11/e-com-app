@@ -6,6 +6,7 @@ import {
   loginUser,
   logoutAllSessions,
   logoutUser,
+  revokeSession,
 } from "../../services/authService";
 
 export const fetchMe = createAsyncThunk(
@@ -111,6 +112,23 @@ export const logoutAll = createAsyncThunk(
     }
   },
 );
+
+export const revokeSessionById = createAsyncThunk(
+  "auth/revokeSession",
+  async (sessionId, { rejectWithValue }) => {
+    try {
+      return {
+        ...(await revokeSession(sessionId)),
+        sessionId,
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Unable to revoke session.",
+      );
+    }
+  },
+);
+
 const initialState = {
   user: null,
   isAuthenticated: false,
@@ -122,7 +140,14 @@ const initialState = {
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {},
+  reducers: {
+    clearAuth: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.loading = false;
+      state.sessions = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchMe.pending, (state) => {
@@ -174,6 +199,10 @@ const authSlice = createSlice({
       })
       .addCase(logoutAll.fulfilled, (state) => {
         state.sessions = [];
+        state.user = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.sessionsLoading = false;
       })
       .addCase(googleLogin.pending, (state) => {
         state.loading = true;
@@ -188,5 +217,5 @@ const authSlice = createSlice({
       });
   },
 });
-
+export const { clearAuth } = authSlice.actions;
 export default authSlice.reducer;

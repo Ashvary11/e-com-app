@@ -22,6 +22,7 @@ import {
   refreshSessionFn,
   resendEmailOtpFn,
   resetPasswordFn,
+  revokeSessionFn,
   setPasswordFn,
   userRegistrationFn,
 } from "../services/authService.js";
@@ -282,7 +283,7 @@ export const changePassword = async (req, res) => {
       newPassword,
       currentSessionId: req.user.sessionId,
     });
-    
+
     sendEmail("passwordResetSuccessMail", { user }, user.email);
 
     return res.status(200).json({
@@ -395,7 +396,7 @@ export const googleLogin = async (req, res) => {
       throwError("Google credential is required.", 400);
     }
 
-    const { user, jwtToken, refreshToken ,isNewUser} = await googleLoginFn({
+    const { user, jwtToken, refreshToken, isNewUser } = await googleLoginFn({
       credential,
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
@@ -408,7 +409,7 @@ export const googleLogin = async (req, res) => {
       .json({
         success: true,
         message: "Google login successful.",
-        isNewUser
+        isNewUser,
       });
   } catch (error) {
     return handleError(error, res);
@@ -435,12 +436,31 @@ export const setPassword = async (req, res) => {
       confirmPassword,
       currentSessionId: req.user.sessionId,
     });
- 
+
     return res.status(200).json({
       success: true,
       message: "Password set successfully.",
     });
-    
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+
+export const revokeSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    await revokeSessionFn(req.user.id, sessionId);
+
+    if (req.user.sessionId === sessionId) {
+      res.clearCookie("accessToken", jwtCookieOptions);
+      res.clearCookie("refreshToken", refreshCookieOptions);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Session revoked successfully.",
+    });
   } catch (error) {
     return handleError(error, res);
   }

@@ -10,15 +10,25 @@ const api = axios.create({
 
 let refreshing = null;
 
+const skipRefreshUrls = [
+  "/auth/refresh",
+  "/auth/login",
+  "/auth/register",
+  "/auth/logout",
+  "/auth/logout-all",
+  "/auth/sessions",
+];
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const request = error.config;
 
     if (
+      !request ||
       error.response?.status !== 401 ||
       request._retry ||
-      request.url.includes("/auth/refresh")
+      skipRefreshUrls.some((url) => request.url?.includes(url))
     ) {
       return Promise.reject(error);
     }
@@ -26,14 +36,15 @@ api.interceptors.response.use(
     request._retry = true;
 
     try {
-      refreshing ??= api.post("/auth/refresh");
+      if (!refreshing) {
+        refreshing = api.post("/auth/refresh").finally(() => {
+          refreshing = null;
+        });
+      }
 
       await refreshing;
-      refreshing = null;
-      console.log("Access token expired. Refreshing...");
       return api(request);
     } catch (refreshError) {
-      refreshing = null;
       return Promise.reject(refreshError);
     }
   },

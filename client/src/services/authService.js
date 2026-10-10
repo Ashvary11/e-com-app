@@ -62,3 +62,10 @@ export const setPassword = async (data) => {
   const response = await api.patch("/auth/set-password", data);
   return response.data;
 };
+
+export const revokeSession = async (sessionId) => {
+  const response = await api.delete(
+    `/auth/sessions/${encodeURIComponent(sessionId)}`,
+  ); 
+  return response.data;
+};

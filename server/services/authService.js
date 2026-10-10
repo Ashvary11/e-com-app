@@ -463,6 +463,33 @@ export const getActiveSessionsFn = async (userId) => {
   ).sort({ lastUsedAt: -1 });
 };
 
+export const revokeSessionFn = async (userId, sessionId) => {
+  if (!userId || !sessionId) {
+    throwError("User ID and session ID are required.", 400);
+  }
+
+  const session = await Session.findOneAndUpdate(
+    {
+      userId,
+      sessionId,
+      revokedAt: null,
+      expiresAt: { $gt: new Date() },
+    },
+    {
+      $set: { revokedAt: new Date() },
+    },
+    {
+      returnDocument: true,
+    },
+  );
+
+  if (!session) {
+    throwError("Active session not found.", 404);
+  }
+
+  return session;
+};
+
 export const googleLoginFn = async ({ credential, userAgent, ipAddress }) => {
   const googleUser = await verifyGoogleToken(credential);
 
