@@ -157,9 +157,9 @@ function Security() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-3 rounded-xl">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Security</h2>
+        <h1 className="text-2xl font-semibold">Security</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Keep your account secure by using a strong password.
         </p>

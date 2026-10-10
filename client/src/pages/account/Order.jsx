@@ -67,10 +67,9 @@ const Order = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-3 rounded-xl">
       <div>
         <h1 className="text-2xl font-semibold">My Orders</h1>
-
         <p className="mt-1 text-sm text-muted-foreground">
           View and manage your orders.
         </p>
@@ -88,7 +87,7 @@ const Order = () => {
 
             return (
               <li key={order.orderNumber}>
-                <div className="rounded-lg border p-4">
+                <div className="rounded-lg border p-4 hover:bg-gray-200 bg-gray-100">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-medium">

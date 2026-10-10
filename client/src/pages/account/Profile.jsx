@@ -19,9 +19,9 @@ function Profile() {
   const needsPassword = user?.hasPassword === false;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-3 rounded-xl">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Profile</h2>
+        <h1 className="text-2xl font-semibold">Profile</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           View your CartSphere account information.
         </p>

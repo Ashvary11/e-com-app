@@ -119,12 +119,12 @@ function Sessions() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-3 rounded-xl">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold">
             Active sessions
-          </h2>
+          </h1>
 
           <p className="mt-1 text-sm text-muted-foreground">
             Review and manage the devices signed in to your account.
@@ -170,8 +170,8 @@ function Sessions() {
                 const isRevoking = revokingSessionId === session.sessionId;
 
                 return (
-                  <div key={session.sessionId || session._id}>
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div key={session.sessionId || session._id} className="hover:bg-gray-200 bg-gray-100 rounded-xl p-2">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ">
                       <div className="flex min-w-0 items-start gap-3">
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                           <DeviceIcon className="size-5" />

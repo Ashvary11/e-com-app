@@ -13,7 +13,7 @@ import {
 import ProductCard from "@/components/ProductCard";
 import ProductSkeleton from "@/components/ProductSkeleton";
 import ProductFilterAndSearch from "@/components/ProductFilterAndSearch";
-
+ 
 function Products() {
   const dispatch = useDispatch();
 
@@ -85,7 +85,7 @@ function Products() {
   };
 
   return (
-    <Container className="py-8">
+    <Container className="py-8 bg-white/20 mt-5 rounded-lg">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Products</h1>
@@ -130,6 +130,7 @@ function Products() {
             {products.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}
+          
           </div>
 
           {/* Floating pagination */}

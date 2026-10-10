@@ -26,7 +26,7 @@ function App() {
   // location.pathname.startsWith("/reset-password");
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col custom-bg">
       {!isAuthPage && <Navbar />}
 
       <main className="flex-1">

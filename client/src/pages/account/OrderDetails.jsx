@@ -69,7 +69,7 @@ const OrderDetails = () => {
 
   return (
     <Container>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6 bg-white p-3 rounded-xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Link

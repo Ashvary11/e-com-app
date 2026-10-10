@@ -42,14 +42,13 @@ export default function ProductFilterAndSearch() {
   }, [dispatch]);
 
   // Keep the search input synchronized with Redux.
-//   useEffect(() => {
-//     setSearchInput(filters.search);
-//   }, [filters.search]);
+  //   useEffect(() => {
+  //     setSearchInput(filters.search);
+  //   }, [filters.search]);
 
   // Debounce search.
   useEffect(() => {
     const timer = setTimeout(() => {
-        
       if (searchInput !== filters.search) {
         dispatch(setFilters({ search: searchInput }));
       }
@@ -125,9 +124,9 @@ export default function ProductFilterAndSearch() {
     }).format(price);
 
   return (
-    <div className="mb-6 space-y-4">
+    <div className="mb-6 space-y-4 rounded-2xl border border-slate-200/80 bg-slate-50/95 p-3 shadow-sm sm:p-5">
       {/* Search, category and sorting */}
-      <div className="rounded-xl border bg-muted/20 p-3 sm:p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
         <div className="space-y-3">
           <Input
             type="search"
@@ -178,7 +177,7 @@ export default function ProductFilterAndSearch() {
       </div>
 
       {/* Price filter */}
-      <div className="rounded-xl border bg-muted/20 p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-sm font-semibold">Price Range</h2>
@@ -221,6 +220,7 @@ export default function ProductFilterAndSearch() {
               </p>
 
               <Button
+              
                 type="button"
                 size="sm"
                 onClick={handleApplyPrice}
