@@ -12,14 +12,14 @@ export const sendEmail = async (emailType, data, to) => {
     const FROM_NAME_MAP = {
       verifyMail: "E-com Accounts",
       welcomeMail: "E-com",
-      
+
       resetPasswordMail: "E-com Security",
       passwordResetSuccessMail: "E-com Security",
       passwordChangedMail: "E-com Security",
       newLoginMail: "E-com Security",
       accountDeletedMail: "E-com Security",
 
-      orderConfirm: "E-com Orders",
+      orderConfirmMail: "E-com Orders",
       orderShipped: "E-com Shipping",
       invoice: "E-com Billing",
       refund: "E-com Refunds",
@@ -37,7 +37,7 @@ export const sendEmail = async (emailType, data, to) => {
         address: process.env.MAIL_FROM,
       },
       to,
-      // replyTo: process.env.MAIL_FROM,
+      replyTo: process.env.MAIL_FROM,
       subject,
       html,
       ...(bcc && { bcc }),

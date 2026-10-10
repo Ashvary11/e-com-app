@@ -2,12 +2,19 @@ import crypto from "crypto";
 import { RAZORPAY } from "../config/razorpayConfig.js";
 import Order from "../models/Order.js";
 import Payment from "../models/Payment.js";
+import Cart from "../models/Cart.js";
+import { sendEmail } from "../utils/email/sendEmail.js";
+import User from "../models/User.js";
+
+const clearUserCart = async (userId) => {
+  await Cart.updateOne({ userId }, { $set: { items: [] } });
+};
 
 export const createRazorpayOrder = async (req, res) => {
   try {
     const { orderNumber } = req.params;
     const userId = req.user.id;
-    
+
     if (!userId) {
       return res.status(404).json({
         success: false,
@@ -85,6 +92,17 @@ export const createRazorpayOrder = async (req, res) => {
   } catch (error) {
     console.error("Create Razorpay order error:", error);
 
+    const razorpayDescription = error?.error?.description;
+    if (
+      razorpayDescription?.includes("Amount exceeds maximum amount allowed")
+    ) {
+      return res.status(400).json({
+        success: false,
+        code: "PAYMENT_AMOUNT_LIMIT",
+        message:
+          "This order exceeds the payment amount limit. Please contact support for assistance.",
+      });
+    }
     return res.status(500).json({
       success: false,
       message: "Failed to create payment",
@@ -140,6 +158,8 @@ export const verifyRazorpayPayment = async (req, res) => {
     }
 
     if (payment.status === "paid") {
+      await clearUserCart(userId);
+
       return res.status(200).json({
         success: true,
         message: "Payment already verified",
@@ -180,6 +200,8 @@ export const verifyRazorpayPayment = async (req, res) => {
     order.paidAt = payment.paidAt;
 
     await order.save();
+
+    await clearUserCart(userId);
 
     return res.status(200).json({
       success: true,
@@ -310,6 +332,11 @@ export const razorpayWebhook = async (req, res) => {
 
     await order.save();
 
+    await clearUserCart(payment.userId);
+
+    // await sendEmail("orderConfirmMail", data, to);
+    await sendOrderMailFn(order);
+
     return res.status(200).json({
       success: true,
       message: "Payment webhook processed successfully",
@@ -321,5 +348,31 @@ export const razorpayWebhook = async (req, res) => {
       success: false,
       message: "Webhook processing failed",
     });
+  }
+};
+
+const sendOrderMailFn = async (order) => {
+  try {
+    const user = await User.findById(order.userId).select("name email");
+
+    const data = {
+      name: user.name,
+      orderNumber: order.orderNumber,
+      orderDate: order.createdAt.toLocaleDateString("en-IN"),
+      paymentMethod: "Razorpay",
+      totalAmount: order.total,
+      items: order.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      orderUrl: `${process.env.CLIENT_URL}/order/${order.orderNumber}`,
+    };
+
+    if (user?.email) {
+      await sendEmail("orderConfirmMail", data, user.email);
+    }
+  } catch (error) {
+    console.error("Order confirmation email failed:", error.message);
   }
 };

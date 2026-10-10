@@ -258,6 +258,5 @@ CartSphere is a personal ecommerce development project created for demonstration
 Thanks,
 CartSphere Team
     `,
-    bcc: ["ashvarygidian1996+e-commerce@gmail.com"],
   };
 }

@@ -37,6 +37,8 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       {/* <Route path="/reset-password" element={<ResetPassword />} /> no use*/}
 
+      <Route path="order/:orderNumber" element={<OrderDetails />} />
+
       <Route element={<ProtectedRoute />}>
         <Route path="/account" element={<AccountLayout />}>
           <Route index element={<Profile />} />

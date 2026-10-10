@@ -330,7 +330,7 @@ export const deleteAccount = async (req, res) => {
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
 
-    await sendEmail("accountDeletedMail", {}, req.user.email);
+    // await sendEmail("accountDeletedMail", {}, req.user.email);
     return res.status(200).json({
       success: true,
       message: "Your account has been deleted successfully.",

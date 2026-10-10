@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -11,6 +11,7 @@ import { Input } from "../components/ui/input";
 import { Separator } from "../components/ui/separator";
 import api from "../services/api";
 import { checkoutSchema } from "../validators/checkoutValidators.js";
+import { clearCart } from "@/store/slices/cartSlice";
 
 const initialForm = {
   email: "",
@@ -42,24 +43,20 @@ const getCartSignature = (items) =>
   );
 
 const getCheckoutIdempotencyKey = (cartItems) => {
-  const cartSignature = getCartSignature(cartItems); 
+  const cartSignature = getCartSignature(cartItems);
   const saved = sessionStorage.getItem(CHECKOUT_IDEMPOTENCY_KEY);
 
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-
-      // Same cart = reuse the existing key.
       if (parsed.cartSignature === cartSignature && parsed.key) {
         return parsed.key;
       }
     } catch {
-      // Invalid stored value. A new key will be created below.
       sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
     }
   }
 
-  // Cart changed or no previous checkout attempt exists.
   const key = crypto.randomUUID();
 
   sessionStorage.setItem(
@@ -82,6 +79,7 @@ function Checkout() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -99,7 +97,6 @@ function Checkout() {
       [name]: value,
     }));
 
-    // Remove the field error as soon as the user starts correcting it.
     if (errors[name]) {
       setErrors((previous) => ({
         ...previous,
@@ -156,9 +153,7 @@ function Checkout() {
       setLoading(true);
 
       // Same cart + retry = same idempotency key.
-      // Changed cart = new idempotency key.
       const idempotencyKey = getCheckoutIdempotencyKey(cartItems);
-
       // 1. Create our CartSphere order.
       const orderResponse = await api.post("/orders", {
         email: validatedForm.email,
@@ -180,13 +175,11 @@ function Checkout() {
       });
 
       const order = orderResponse.data.order;
-
       // 2. Create the Razorpay order.
       const paymentResponse = await api.post(`/payments/${order.orderNumber}`);
-
       const payment = paymentResponse.data;
 
-      // 3. Make sure Razorpay Checkout is available.
+      // 3.Razorpay Checkout is available.
       if (!window.Razorpay) {
         toast.error("Payment gateway failed to load");
         return;
@@ -223,7 +216,10 @@ function Checkout() {
 
             if (verifyResponse.data.success) {
               // Payment is confirmed, so this checkout attempt is complete.
+              dispatch(clearCart());
+              localStorage.removeItem("cartsphere-cart");
               sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+
               toast.success("Payment successful");
 
               // Payment is confirmed, so now clear the cart.
@@ -233,7 +229,6 @@ function Checkout() {
           } catch (error) {
             const message =
               error.response?.data?.message || "Payment verification failed";
-
             toast.error(message);
           } finally {
             setLoading(false);
@@ -252,7 +247,6 @@ function Checkout() {
 
       razorpay.on("payment.failed", (response) => {
         console.error("Razorpay payment failed:", response.error);
-
         toast.error(
           response.error?.description || "Payment failed. Please try again.",
         );

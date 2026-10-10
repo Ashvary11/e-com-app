@@ -38,8 +38,8 @@ app.use(
 app.use(
   express.json({
     verify: (req, res, buf) => {
-      if (req.originalUrl.endsWith("/payment/webhook")) {
-        req.rawBody = buf;
+      if (req.originalUrl.split("?")[0].endsWith("/webhook")) {
+        req.rawBody = Buffer.from(buf);
       }
     },
   }),

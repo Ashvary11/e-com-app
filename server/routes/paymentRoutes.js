@@ -10,7 +10,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Payments
-router.post("/webhook", authMiddleware, razorpayWebhook);
+router.post("/webhook", razorpayWebhook);
 router.post("/verify", authMiddleware, verifyRazorpayPayment);
 router.post("/:orderNumber", authMiddleware, createRazorpayOrder);
 
