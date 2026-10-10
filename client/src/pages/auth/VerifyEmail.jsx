@@ -13,7 +13,7 @@ import { resendVerification, verifyEmail } from "../../services/authService";
 import { verifyEmailSchema } from "../../validators/authValidators";
 import { fetchMe } from "../../store/slices/authSlice";
 import { useDispatch } from "react-redux";
-import { syncCartWithServer } from "@/lib/syncCart";
+import { mergeGuestCart } from "@/store/slices/cartSlice";
 
 function VerifyEmail() {
   const navigate = useNavigate();
@@ -43,11 +43,11 @@ function VerifyEmail() {
       setLoading(true);
       setError("");
 
-      const response = await verifyEmail(result.data); 
+      const response = await verifyEmail(result.data);
       toast.success(response.message || "Email verified successfully.");
 
       await dispatch(fetchMe()).unwrap();
-      await syncCartWithServer();
+      await dispatch(mergeGuestCart()).unwrap();
 
       navigate("/", { replace: true });
     } catch (error) {

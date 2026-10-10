@@ -12,9 +12,8 @@ import {
   increaseQuantity,
   decreaseQuantity,
   removeFromCart,
-  // clearCart,
+  scheduleDbCartUpdate,
 } from "../store/slices/cartSlice";
-import { syncAuthenticatedCart } from "@/lib/syncAuthenticatedCart";
 
 function Cart() {
   const dispatch = useDispatch();
@@ -27,20 +26,11 @@ function Cart() {
     0,
   );
 
-  // const handleRemove = (id) => {
-  //   dispatch(removeFromCart(id));
-  //   toast.success("Item removed from cart");
-  // };
-
-  // const handleClearCart = () => {
-  //   dispatch(clearCart());
-  //   toast.success("Cart cleared");
-  // };
   const handleIncrease = (id) => {
     dispatch(increaseQuantity(id));
 
     if (isAuthenticated) {
-      syncAuthenticatedCart();
+      dispatch(scheduleDbCartUpdate());
     }
   };
 
@@ -48,15 +38,14 @@ function Cart() {
     dispatch(decreaseQuantity(id));
 
     if (isAuthenticated) {
-      syncAuthenticatedCart();
+      dispatch(scheduleDbCartUpdate());
     }
   };
 
   const handleRemove = (id) => {
     dispatch(removeFromCart(id));
-
     if (isAuthenticated) {
-      syncAuthenticatedCart();
+      dispatch(scheduleDbCartUpdate());
     }
 
     toast.success("Item removed from cart");
@@ -125,7 +114,6 @@ function Cart() {
                         </div>
 
                         <Button
-                         
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemove(item._id)}
@@ -139,7 +127,6 @@ function Cart() {
                         {/* Quantity */}
                         <div className="flex items-center rounded-md border">
                           <Button
-                           
                             type="button"
                             variant="ghost"
                             size="icon"
@@ -154,7 +141,6 @@ function Cart() {
                           </span>
 
                           <Button
-                            
                             type="button"
                             variant="ghost"
                             size="icon"

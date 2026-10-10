@@ -1,7 +1,70 @@
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 
-export const syncCart = async (req, res) => {
+const getCartResponse = async (cart) => {
+  const productIds = cart.items.map((item) => item.productId);
+
+  const products = await Product.find({
+    _id: { $in: productIds },
+    isActive: true,
+  })
+    .select("name slug price originalPrice images stock")
+    .lean();
+
+  const productMap = new Map(
+    products.map((product) => [product._id.toString(), product]),
+  );
+
+  const items = cart.items
+    .map((item) => {
+      const product = productMap.get(item.productId.toString());
+
+      if (!product || product.stock <= 0) return null;
+
+      return {
+        _id: product._id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        images: product.images || [],
+        stock: product.stock,
+        quantity: Math.min(item.quantity, product.stock),
+      };
+    })
+    .filter(Boolean);
+
+  return items;
+};
+
+export const getCart = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user.id });
+
+    if (!cart) {
+      return res.status(200).json({
+        success: true,
+        cart: { items: [] },
+      });
+    }
+
+    const items = await getCartResponse(cart);
+
+    return res.status(200).json({
+      success: true,
+      cart: { items },
+    });
+  } catch (error) {
+    console.error("Get cart error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load cart.",
+    });
+  }
+};
+
+export const mergeCart = async (req, res) => {
   try {
     const { items = [] } = req.body;
 
@@ -13,138 +76,81 @@ export const syncCart = async (req, res) => {
     }
 
     const userId = req.user.id;
-
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      cart = new Cart({
-        userId,
-        items: [],
-      });
+      cart = new Cart({ userId, items: [] });
     }
 
-    // Combine existing DB cart + guest cart
-    const mergedQuantities = new Map();
+    const quantities = new Map();
 
     for (const item of cart.items) {
-      mergedQuantities.set(item.productId.toString(), item.quantity);
+      quantities.set(item.productId.toString(), item.quantity);
     }
 
     for (const item of items) {
-      if (!item?.productId || !Number.isInteger(item.quantity)) {
+      if (
+        !item?.productId ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1
+      ) {
         continue;
       }
 
-      if (item.quantity < 1) {
-        continue;
-      }
+      const id = item.productId.toString();
 
-      const productId = item.productId.toString();
-
-      mergedQuantities.set(
-        productId,
-        (mergedQuantities.get(productId) || 0) + item.quantity,
-      );
+      quantities.set(id, (quantities.get(id) || 0) + item.quantity);
     }
 
-    const productIds = [...mergedQuantities.keys()];
+    const productIds = [...quantities.keys()];
 
-    if (productIds.length === 0) {
-      cart.items = [];
-      await cart.save();
-
-      return res.status(200).json({
-        success: true,
-        message: "Cart synchronized.",
-        cart: {
-          items: [],
-        },
-      });
-    }
-
-    // Fetch only active products
     const products = await Product.find({
       _id: { $in: productIds },
       isActive: true,
     })
-      .select("name slug price originalPrice images stock")
+      .select("_id stock")
       .lean();
 
     const productMap = new Map(
       products.map((product) => [product._id.toString(), product]),
     );
 
-    const finalItems = [];
+    cart.items = productIds
+      .map((id) => {
+        const product = productMap.get(id);
 
-    for (const productId of productIds) {
-      const product = productMap.get(productId);
-
-      // Product deleted/inactive
-      if (!product) {
-        continue;
-      }
-
-      const requestedQuantity = mergedQuantities.get(productId);
-
-      // Product out of stock
-      if (product.stock <= 0) {
-        continue;
-      }
-
-      const quantity = Math.min(requestedQuantity, product.stock);
-
-      finalItems.push({
-        productId: product._id,
-        quantity,
-      });
-    }
-
-    cart.items = finalItems;
-
-    await cart.save();
-
-    // Return authoritative cart with current product data
-    const responseItems = finalItems
-      .map((item) => {
-        const product = productMap.get(item.productId.toString());
-
-        if (!product) {
-          return null;
-        }
+        if (!product || product.stock <= 0) return null;
 
         return {
-          _id: product._id,
-          name: product.name,
-          slug: product.slug,
-          price: product.price,
-          originalPrice: product.originalPrice,
-          images: product.images || [],
-          stock: product.stock,
-          quantity: item.quantity,
+          productId: product._id,
+          quantity: Math.min(quantities.get(id), product.stock),
         };
       })
       .filter(Boolean);
 
+    await cart.save();
+
+    const responseItems = await getCartResponse(cart);
+
     return res.status(200).json({
       success: true,
-      message: "Cart synchronized successfully.",
-      cart: {
-        items: responseItems,
-      },
+      message: "Cart merged successfully.",
+      cart: { items: responseItems },
     });
   } catch (error) {
-    console.error("Sync cart error:", error);
+    console.error("Merge cart error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to synchronize cart.",
+      message: "Failed to merge cart.",
     });
   }
 };
 
 export const updateCart = async (req, res) => {
   try {
-    const { items = [] } = req.body;
+    const { items } = req.body;
+
     if (!Array.isArray(items)) {
       return res.status(400).json({
         success: false,
@@ -153,113 +159,71 @@ export const updateCart = async (req, res) => {
     }
 
     const userId = req.user.id;
+    const quantities = new Map();
 
-    let cart = await Cart.findOne({ userId });
-
-    if (!cart) {
-      cart = new Cart({
-        userId,
-        items: [],
-      });
-    }
-
-    const requestedItems = new Map();
-
+    // Validate items and combine duplicate product IDs.
     for (const item of items) {
-      if (!item?.productId || !Number.isInteger(item.quantity)) {
-        continue;
+      if (
+        !item?.productId ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid product or quantity.",
+        });
       }
 
-      if (item.quantity < 1) {
-        continue;
-      }
+      const id = item.productId.toString();
 
-      requestedItems.set(item.productId.toString(), item.quantity);
+      quantities.set(id, (quantities.get(id) || 0) + item.quantity);
     }
 
-    const productIds = [...requestedItems.keys()];
-
-    if (productIds.length === 0) {
-      cart.items = [];
-      await cart.save();
-
-      return res.status(200).json({
-        success: true,
-        message: "Cart updated successfully.",
-        cart: {
-          items: [],
-        },
-      });
-    }
+    const productIds = [...quantities.keys()];
 
     const products = await Product.find({
       _id: { $in: productIds },
       isActive: true,
     })
-      .select("name slug price originalPrice images stock")
+      .select("_id stock")
       .lean();
 
     const productMap = new Map(
       products.map((product) => [product._id.toString(), product]),
     );
 
-    const finalItems = [];
+    // Keep only active products and enforce stock limits.
+    const updatedItems = productIds
+      .map((id) => {
+        const product = productMap.get(id);
 
-    //   Validate every requested item against current stock.
-    for (const productId of productIds) {
-      const product = productMap.get(productId);
-
-      if (!product) {
-        continue;
-      }
-
-      if (product.stock <= 0) {
-        continue;
-      }
-
-      const requestedQuantity = requestedItems.get(productId);
-
-      // Never allow cart quantity above current stock.
-      const quantity = Math.min(requestedQuantity, product.stock);
-
-      finalItems.push({
-        productId: product._id,
-        quantity,
-      });
-    }
-
-    //    Replace DB cart with validated cart.
-    cart.items = finalItems;
-    await cart.save();
-
-    //  Return authoritative cart data.
-    const responseItems = finalItems
-      .map((item) => {
-        const product = productMap.get(item.productId.toString());
-
-        if (!product) {
+        if (!product || product.stock <= 0) {
           return null;
         }
 
         return {
-          _id: product._id,
-          name: product.name,
-          slug: product.slug,
-          price: product.price,
-          originalPrice: product.originalPrice,
-          images: product.images || [],
-          stock: product.stock,
-          quantity: item.quantity,
+          productId: product._id,
+          quantity: Math.min(quantities.get(id), product.stock),
         };
       })
       .filter(Boolean);
 
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      cart = new Cart({ userId, items: updatedItems });
+    } else {
+      cart.items = updatedItems;
+    }
+
+    await cart.save();
+
+    const responseItems = await getCartResponse(cart);
+
     return res.status(200).json({
       success: true,
       message: "Cart updated successfully.",
-      cart: {
-        items: responseItems,
-      },
+      cart: { items: responseItems },
     });
   } catch (error) {
     console.error("Update cart error:", error);

@@ -15,7 +15,7 @@ const accountLinks = [
     icon: UserRound,
   },
   {
-    to: "/orders",
+    to: "/account/orders",
     label: "Order",
     icon: UserRound,
     end: true,

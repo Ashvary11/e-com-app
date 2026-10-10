@@ -9,6 +9,7 @@ import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,11 +35,19 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      if (req.originalUrl.endsWith("/payment/webhook")) {
+        req.rawBody = buf;
+      }
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use("/api", limiter);
+// app.use("/api", limiter);
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -48,9 +57,10 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 // --------------------------
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

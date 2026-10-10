@@ -1,5 +1,10 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import {
+  cancelUserOrder,
+  getUserOrder,
+  getUserOrders,
+} from "../services/orderService.js";
 import { createOrderSchema } from "../validators/orderValidator.js";
 
 const SHIPPING_CHARGE = 0;
@@ -20,7 +25,12 @@ const getOrderResponse = (order) => ({
   total: order.total,
   orderStatus: order.orderStatus,
   paymentStatus: order.paymentStatus,
+  paymentMethod: order.paymentMethod,
   shippingAddress: order.shippingAddress,
+  createdAt: order.createdAt,
+  paidAt: order.paidAt,
+  cancelledAt: order.cancelledAt,
+  cancellationReason: order.cancellationReason,
 });
 
 export const createOrder = async (req, res) => {
@@ -150,23 +160,16 @@ export const createOrder = async (req, res) => {
 
     const order = await Order.create({
       userId,
-
       orderNumber: generateOrderNumber(),
-
       idempotencyKey,
-
       customer: {
         email,
       },
-
       shippingAddress,
-
       items: orderItems,
-
       subtotal,
       shipping,
       total,
-
       orderStatus: "pending",
       paymentStatus: "pending",
       paymentMethod: "razorpay",
@@ -201,6 +204,102 @@ export const createOrder = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to create order",
+    });
+  }
+};
+
+export const getOrders = async (req, res) => {
+  try {
+    const orders = await getUserOrders(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    console.error("Get orders error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+    });
+  }
+};
+
+export const getOrder = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    const order = await getUserOrder(req.user.id, orderNumber);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    console.error("Get order error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch order",
+    });
+  }
+};
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const { reason } = req.body;
+
+    const result = await cancelUserOrder(req.user.id, orderNumber, reason);
+
+    if (result.error === "NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (result.error === "ALREADY_CANCELLED") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already cancelled",
+      });
+    }
+
+    if (result.error === "NOT_CANCELLABLE") {
+      return res.status(400).json({
+        success: false,
+        message: "This order can no longer be cancelled",
+      });
+    }
+
+    if (result.error === "REFUND_REQUIRED") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This paid order cannot be cancelled until refund processing is available",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
+      order: result.order,
+    });
+  } catch (error) {
+    console.error("Cancel order error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
     });
   }
 };

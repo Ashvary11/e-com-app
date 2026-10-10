@@ -42,8 +42,7 @@ const getCartSignature = (items) =>
   );
 
 const getCheckoutIdempotencyKey = (cartItems) => {
-  const cartSignature = getCartSignature(cartItems);
-
+  const cartSignature = getCartSignature(cartItems); 
   const saved = sessionStorage.getItem(CHECKOUT_IDEMPOTENCY_KEY);
 
   if (saved) {
@@ -78,6 +77,7 @@ function Checkout() {
   const navigate = useNavigate();
 
   const cartItems = useSelector((state) => state.cart.items);
+  const user = useSelector((state) => state.auth.user);
 
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(initialForm);
@@ -147,6 +147,11 @@ function Checkout() {
       return;
     }
 
+    if (!user) {
+      toast.error("Please login to continue");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -154,11 +159,10 @@ function Checkout() {
       // Changed cart = new idempotency key.
       const idempotencyKey = getCheckoutIdempotencyKey(cartItems);
 
-      const response = await api.post("/orders", {
+      // 1. Create our CartSphere order.
+      const orderResponse = await api.post("/orders", {
         email: validatedForm.email,
-
         idempotencyKey,
-
         items: cartItems.map((item) => ({
           productId: item._id,
           quantity: item.quantity,
@@ -175,24 +179,88 @@ function Checkout() {
         },
       });
 
-      const order = response.data.order;
+      const order = orderResponse.data.order;
 
-      // Order creation succeeded.
-      // The idempotency key is no longer needed for this checkout attempt.
-      sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+      // 2. Create the Razorpay order.
+      const paymentResponse = await api.post(`/payments/${order.orderNumber}`);
 
-      toast.success(response.data.message || "Order created successfully");
+      const payment = paymentResponse.data;
 
-      console.log("Created order:", order);
+      // 3. Make sure Razorpay Checkout is available.
+      if (!window.Razorpay) {
+        toast.error("Payment gateway failed to load");
+        return;
+      }
 
-      // Temporary until Razorpay + order details page are implemented.
-      // Do NOT clear the cart here.
-      //
-      // navigate(`/orders/${order.id}`, {
-      //   state: {
-      //     order,
-      //   },
-      // });
+      // 4. Open Razorpay Checkout.
+      const options = {
+        key: payment.keyId,
+        amount: payment.amount,
+        currency: payment.currency,
+        name: "CartSphere",
+        description: `Order ${payment.orderNumber}`,
+        order_id: payment.razorpayOrderId,
+        prefill: {
+          name: validatedForm.fullName,
+          email: validatedForm.email,
+          contact: validatedForm.phone,
+        },
+        theme: {
+          color: "#000000",
+        },
+
+        handler: async (response) => {
+          try {
+            setLoading(true);
+
+            // 5. Verify the payment on our backend.
+            const verifyResponse = await api.post("/payments/verify", {
+              orderNumber: payment.orderNumber,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+
+            if (verifyResponse.data.success) {
+              // Payment is confirmed, so this checkout attempt is complete.
+              sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+              toast.success("Payment successful");
+
+              // Payment is confirmed, so now clear the cart.
+              // We'll add the actual Redux clearCart dispatch next.
+              navigate(`/account/orders/${payment.orderNumber}`);
+            }
+          } catch (error) {
+            const message =
+              error.response?.data?.message || "Payment verification failed";
+
+            toast.error(message);
+          } finally {
+            setLoading(false);
+          }
+        },
+
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            toast.info("Payment cancelled");
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+
+      razorpay.on("payment.failed", (response) => {
+        console.error("Razorpay payment failed:", response.error);
+
+        toast.error(
+          response.error?.description || "Payment failed. Please try again.",
+        );
+
+        setLoading(false);
+      });
+
+      razorpay.open();
     } catch (error) {
       const data = error.response?.data;
 

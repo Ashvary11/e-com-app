@@ -180,22 +180,20 @@ const orderSchema = new mongoose.Schema(
       enum: ["razorpay", "cod"],
       default: "razorpay",
     },
-
-    // Reserved for Razorpay integration.
-    razorpayOrderId: {
-      type: String,
-      default: null,
-      index: true,
-    },
-
-    razorpayPaymentId: {
-      type: String,
+    paidAt: {
+      type: Date,
       default: null,
     },
 
-    razorpaySignature: {
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancellationReason: {
       type: String,
       default: null,
+      trim: true,
     },
   },
   {

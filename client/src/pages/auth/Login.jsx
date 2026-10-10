@@ -11,7 +11,8 @@ import { googleLogin, login } from "../../store/slices/authSlice";
 
 import AuthLayout from "@/components/layout/AuthLayout";
 import { loginWithEmailSchema } from "@/validators/authValidators";
-import { syncCartWithServer } from "@/lib/syncCart";
+import { mergeGuestCart } from "@/store/slices/cartSlice";
+ 
 
 function GoogleIcon() {
   return (
@@ -88,7 +89,7 @@ function Login() {
 
       toast.success("Login successful.");
 
-      await syncCartWithServer();
+     await dispatch(mergeGuestCart()).unwrap();
 
       navigate("/");
     } catch (error) {
@@ -104,7 +105,7 @@ function Login() {
 
       toast.success("Google login successful.");
 
-      await syncCartWithServer();
+      await dispatch(mergeGuestCart()).unwrap();
 
       navigate("/");
     } catch (error) {
@@ -247,7 +248,6 @@ function Login() {
         </div>
 
         <div className="relative w-full">
-          
           <Button
             type="button"
             variant="outline"

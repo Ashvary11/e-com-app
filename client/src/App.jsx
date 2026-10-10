@@ -5,13 +5,17 @@ import { useLocation } from "react-router-dom";
 import { fetchMe } from "./store/slices/authSlice";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
+import { fetchDbCart } from "./store/slices/cartSlice";
 
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchMe());
+    dispatch(fetchMe())
+      .unwrap()
+      .then(() => dispatch(fetchDbCart()))
+      .catch(() => {});
   }, [dispatch]);
 
   const isAuthPage =

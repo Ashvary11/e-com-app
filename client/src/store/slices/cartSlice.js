@@ -1,8 +1,100 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  getDbCartApi,
+  mergeCartApi,
+  updateDbCartApi,
+} from "../../services/cartApi.js";
+
+export const fetchDbCart = createAsyncThunk(
+  "cart/fetchDbCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getDbCartApi();
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to load cart.");
+      }
+
+      return response.cart.items || [];
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const mergeGuestCart = createAsyncThunk(
+  "cart/mergeGuestCart",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const guestItems = getState().cart.items;
+
+      // No guest items: just load the existing database cart.
+      if (guestItems.length === 0) {
+        const response = await getDbCartApi();
+
+        if (!response.success) {
+          throw new Error(response.message || "Failed to load cart.");
+        }
+
+        return response.cart.items || [];
+      }
+
+      const response = await mergeCartApi(guestItems);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to merge cart.");
+      }
+
+      // Remove the guest cart only after a successful merge.
+      localStorage.removeItem("cartsphere-cart");
+
+      return response.cart.items || [];
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const updateDbCart = createAsyncThunk(
+  "cart/updateDbCart",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const response = await updateDbCartApi(getState().cart.items);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to update cart.");
+      }
+
+      return response.cart.items || [];
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+let updateTimer;
+
+export const scheduleDbCartUpdate = () => (dispatch, getState) => {
+  clearTimeout(updateTimer);
+
+  updateTimer = setTimeout(() => {
+    if (!getState().auth.isAuthenticated) return;
+
+    dispatch(updateDbCart())
+      .unwrap()
+      .then(() => {
+        console.log("Cart updated in database");
+      })
+      .catch((error) => {
+        console.error("Cart database update failed:", error);
+      });
+  }, 500);
+};
 
 const initialState = {
   items: [],
 };
+
 const cartSlice = createSlice({
   name: "cart",
   initialState,
@@ -53,9 +145,33 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.items = [];
     },
+
     setCart: (state, action) => {
       state.items = action.payload;
     },
+  },
+
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchDbCart.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(mergeGuestCart.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(updateDbCart.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+
+      // Clear Redux cart on logout without touching MongoDB.
+      .addMatcher(
+        (action) =>
+          action.type === "auth/logout/fulfilled" ||
+          action.type === "auth/logout/rejected",
+        (state) => {
+          state.items = [];
+        },
+      );
   },
 });
 

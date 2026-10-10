@@ -8,8 +8,9 @@ import { registerSchema } from "../../validators/authValidators";
 import { registerUser } from "../../services/authService";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { useDispatch } from "react-redux";
-import { syncCartWithServer } from "@/lib/syncCart";
+
 import { googleLogin } from "@/store/slices/authSlice";
+import { mergeGuestCart } from "@/store/slices/cartSlice";
 
 function GoogleIcon() {
   return (
@@ -116,7 +117,8 @@ function Register() {
           : "Signed in with Google.",
       );
 
-      await syncCartWithServer();
+       await dispatch(mergeGuestCart()).unwrap();
+      
 
       navigate("/");
     } catch (error) {

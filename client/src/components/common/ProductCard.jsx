@@ -4,10 +4,9 @@ import { ShoppingCart, Star } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter } from "../ui/card";
-import { addToCart } from "../../store/slices/cartSlice";
+import { addToCart, scheduleDbCartUpdate } from "../../store/slices/cartSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { syncAuthenticatedCart } from "@/lib/syncAuthenticatedCart";
 
 function ProductCard({ product }) {
   const {
@@ -32,7 +31,8 @@ function ProductCard({ product }) {
       : 0;
 
   const image = images?.[0] || "/placeholder-product.png";
-  const handleAddToCart = () => {
+
+  const handleAddToCart = async () => {
     dispatch(
       addToCart({
         ...product,
@@ -40,14 +40,13 @@ function ProductCard({ product }) {
       }),
     );
     if (isAuthenticated) {
-      syncAuthenticatedCart();
+       dispatch(scheduleDbCartUpdate());
     }
     toast.success("Product added to cart");
   };
   const isOutOfStock = product?.stock <= 0;
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
-      {/* Image */}
       {/* <Link to={`/products/${_id}`} className="block"> */}
       <Link to={`/products/${slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-muted">
