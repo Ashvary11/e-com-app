@@ -10,10 +10,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../components/ui/pagination";
-import ProductCard from "@/components/ProductCard";
+// import ProductCard from "@/components/ProductCard";
 import ProductSkeleton from "@/components/ProductSkeleton";
 import ProductFilterAndSearch from "@/components/ProductFilterAndSearch";
- 
+import { HoverEffect } from "@/components/ui/card-hover-effect";
+
 function Products() {
   const dispatch = useDispatch();
 
@@ -126,11 +127,11 @@ function Products() {
       {/* Product grid */}
       {!loading && products.length > 0 && (
         <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
+          <div>
+            {/* {products.map((product) => (
               <ProductCard key={product._id} product={product} />
-            ))}
-          
+            ))} */}
+            <HoverEffect items={products} />
           </div>
 
           {/* Floating pagination */}

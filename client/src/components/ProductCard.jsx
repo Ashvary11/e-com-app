@@ -22,6 +22,7 @@ function ProductCard({ product }) {
     reviewCount = 0,
     stock = 0,
   } = product;
+
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
@@ -31,25 +32,23 @@ function ProductCard({ product }) {
       : 0;
 
   const image = images?.[0] || "/placeholder-product.png";
+  const isOutOfStock = stock <= 0;
+  const productUrl = `/products/${slug || _id}`;
 
-  const handleAddToCart = async () => {
-    dispatch(
-      addToCart({
-        ...product,
-        quantity: 1,
-      }),
-    );
+  const handleAddToCart = () => {
+    dispatch(addToCart({ ...product, quantity: 1 }));
+
     if (isAuthenticated) {
-       dispatch(scheduleDbCartUpdate());
+      dispatch(scheduleDbCartUpdate());
     }
+
     toast.success("Product added to cart");
   };
-  const isOutOfStock = product?.stock <= 0;
+
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
-      {/* <Link to={`/products/${_id}`} className="block"> */}
-      <Link to={`/products/${slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden bg-muted">
+    <Card className="group h-full overflow-hidden rounded-xl border bg-card transition-shadow duration-200 hover:shadow-md">
+      <Link to={productUrl} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <img
             src={image}
             alt={name}
@@ -58,10 +57,12 @@ function ProductCard({ product }) {
           />
 
           {discount > 0 && (
-            <Badge className="absolute left-3 top-3">-{discount}%</Badge>
+            <Badge className="absolute left-2 top-2 text-[10px]">
+              -{discount}%
+            </Badge>
           )}
 
-          {stock <= 0 && (
+          {isOutOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/70">
               <Badge variant="secondary">Out of stock</Badge>
             </div>
@@ -69,61 +70,59 @@ function ProductCard({ product }) {
         </div>
       </Link>
 
-      <CardContent className="space-y-2 p-4">
-        {/* Brand / Category */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {brand && <span>{brand}</span>}
-          {brand && category && <span>•</span>}
-          {category && <span>{category}</span>}
+      <CardContent className="space-y-1.5 p-3">
+        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] text-muted-foreground">
+          {brand && <span className="truncate">{brand}</span>}
+
+          {brand && category && <span>·</span>}
+
+          {category && <span className="truncate">{category}</span>}
         </div>
 
-        {/* Name */}
-        <Link to={`/products/${slug || _id}`} className="block">
-          <h3 className="line-clamp-2 min-h-10 font-medium transition-colors hover:text-primary">
+        <Link to={productUrl} className="block">
+          <h3 className="line-clamp-2 min-h-10 text-sm font-medium leading-5 transition-colors hover:text-primary">
             {name}
           </h3>
         </Link>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1 text-sm">
-          <Star className="h-4 w-4 fill-current" />
+        <div className="flex items-center gap-1 text-xs">
+          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
           <span className="font-medium">{Number(rating).toFixed(1)}</span>
           <span className="text-muted-foreground">({reviewCount})</span>
         </div>
 
-        {/* Price */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-base font-bold">
             ₹{Number(price).toLocaleString("en-IN")}
           </span>
 
           {originalPrice > price && (
-            <span className="text-sm text-muted-foreground line-through">
+            <span className="text-xs text-muted-foreground line-through">
               ₹{Number(originalPrice).toLocaleString("en-IN")}
             </span>
           )}
         </div>
 
-        {/* Stock */}
+        {/* Low stock notice */}
         {stock > 0 && stock <= 5 && (
-          <p className="text-xs text-muted-foreground">Only {stock} left</p>
+          <p className="text-[11px] text-muted-foreground">Only {stock} left</p>
         )}
       </CardContent>
 
-      <CardFooter className="grid gap-2 p-4 pt-0">
+      <CardFooter className="grid gap-2 p-3 pt-0">
         <Button
-          size="lg"
+          size="sm"
           variant="outline"
-          className="w-full"
+          className="w-full text-xs"
           disabled={isOutOfStock}
           onClick={handleAddToCart}
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
+          <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
           {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
 
-        <Button asChild size="lg" className="w-full">
-          <Link to={`/products/${slug || _id}`}>View Details</Link>
+        <Button asChild size="sm" className="w-full text-xs">
+          <Link to={productUrl}>View Details</Link>
         </Button>
       </CardFooter>
     </Card>

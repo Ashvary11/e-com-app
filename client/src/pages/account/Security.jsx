@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { Eye, EyeOff, KeyRound, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -16,6 +16,7 @@ import {
   changePasswordSchema,
   setPasswordSchema,
 } from "../../validators/authValidators";
+import { useNavigate } from "react-router-dom";
 
 function PasswordField({ label, name, value, onChange, placeholder }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -60,11 +61,13 @@ function PasswordField({ label, name, value, onChange, placeholder }) {
 function Security() {
   const { user } = useSelector((state) => state.auth);
   const [hasPassword, setHasPassword] = useState(user?.hasPassword === true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -129,7 +132,7 @@ function Security() {
       if (!hasPassword) {
         setHasPassword(true);
       }
-      
+
       toast.success(
         response?.message ||
           (hasPassword
@@ -145,6 +148,7 @@ function Security() {
 
       setErrors({});
     } catch (error) {
+       setShowForgotPassword(true);
       toast.error(
         error.response?.data?.message ||
           (hasPassword
@@ -190,6 +194,18 @@ function Security() {
                     {errors.currentPassword}
                   </p>
                 )}
+               {showForgotPassword && <div className="-mt-2 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto gap-1 p-0 text-muted-foreground hover:text-primary"
+                    onClick={() => navigate("/forgot-password")}
+                  >
+                    <KeyRound className="size-4" />
+                    Forgot password?
+                  </Button>
+                </div>}
               </>
             )}
 

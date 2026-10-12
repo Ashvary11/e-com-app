@@ -31,6 +31,7 @@ export const userRegistrationFn = async ({ name, email, password }) => {
 
       existingUser.name = name;
       existingUser.password = await hashPassword(password);
+      existingUser.passwordChangedAt = new Date();
       existingUser.emailVerificationOtpHash = hashOtp;
       existingUser.emailVerificationOtpExpiresAt = otpExpiresAt;
       existingUser.emailVerificationOtpAttempts = 0;
@@ -57,6 +58,7 @@ export const userRegistrationFn = async ({ name, email, password }) => {
     emailVerificationOtpHash: hashOtp,
     emailVerificationOtpExpiresAt: otpExpiresAt,
     hasPassword: true,
+    passwordChangedAt: new Date(),
   });
 
   return {
@@ -242,11 +244,14 @@ export const resetPasswordFn = async ({
     throwError("Invalid OTP.", 400);
   }
   user.password = await hashPassword(newPassword);
+  user.hasPassword = true;
+  user.passwordChangedAt = new Date();
 
   user.passwordResetOtpHash = undefined;
   user.passwordResetOtpExpiresAt = undefined;
 
   await user.save();
+
   await Session.updateMany(
     { userId: user._id, revokedAt: null },
     { $set: { revokedAt: new Date() } },
@@ -384,6 +389,9 @@ export const changePasswordFn = async ({
   }
 
   user.password = await hashPassword(newPassword);
+  user.hasPassword = true;
+  user.passwordChangedAt = new Date();
+
   await user.save();
 
   await Session.updateMany(
@@ -567,6 +575,7 @@ export const googleLoginFn = async ({ credential, userAgent, ipAddress }) => {
     isNewUser,
   };
 };
+
 export const setPasswordFn = async ({
   userId,
   newPassword,
@@ -597,6 +606,7 @@ export const setPasswordFn = async ({
 
   user.password = await hashPassword(newPassword);
   user.hasPassword = true;
+  user.passwordChangedAt = new Date();
 
   await user.save();
 

@@ -17,7 +17,12 @@ import Order from "@/pages/account/Order";
 import Security from "@/pages/account/Security";
 import Sessions from "@/pages/account/Sessions";
 import OrderDetails from "@/pages/account/OrderDetails";
-// import ResetPassword from "@/pages/auth/ResetPassword";
+import AdminDashboard from "@/pages/account/(admin)/AdminDashboard";
+import AdminRoute from "./AdminRoute";
+import AdminLayout from "@/pages/account/(admin)/AdminLayout";
+import AdminProducts from "@/pages/account/(admin)/AdminProducts";
+import AdminOrders from "@/pages/account/(admin)/AdminOrders";
+import AdminUsers from "@/pages/account/(admin)/AdminUsers";
 
 function AppRoutes() {
   return (
@@ -35,10 +40,9 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      {/* <Route path="/reset-password" element={<ResetPassword />} /> no use*/}
 
       <Route path="order/:orderNumber" element={<OrderDetails />} />
-
+      {/* Profile + Admin*/}
       <Route element={<ProtectedRoute />}>
         <Route path="/account" element={<AccountLayout />}>
           <Route index element={<Profile />} />
@@ -47,6 +51,20 @@ function AppRoutes() {
           <Route path="orders/:orderNumber" element={<OrderDetails />} />
           <Route path="security" element={<Security />} />
           <Route path="sessions" element={<Sessions />} />
+
+          {/* Admin-only nested routes */}
+          <Route element={<AdminRoute />}>
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+
+              <Route
+                path="products"
+                element={<AdminProducts title="Products" />}
+              />
+              <Route path="orders" element={<AdminOrders title="Orders" />} />
+              <Route path="users" element={<AdminUsers title="Users" />} />
+            </Route>
+          </Route>
         </Route>
       </Route>
 

@@ -3,8 +3,14 @@ import Container from "../../components/layout/Container";
 
 import { cn } from "../../lib/utils";
 import { Separator } from "../../components/ui/separator";
-import { LogOut, LockKeyhole, Monitor, UserRound } from "lucide-react";
-import { useDispatch } from "react-redux";
+import {
+  LogOut,
+  LockKeyhole,
+  Monitor,
+  UserRound,
+  ShieldCheck,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { logout } from "@/store/slices/authSlice";
 
@@ -35,6 +41,8 @@ const accountLinks = [
 function AccountLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+  const isAdmin = user?.role === "admin";
 
   const handleLogout = async () => {
     try {
@@ -85,7 +93,32 @@ function AccountLayout() {
                   </NavLink>
                 );
               })}
+              {/*  */}
+              {/* Admin-only navigation */}
+              {isAdmin && (
+                <>
+                  <Separator className="my-1 hidden lg:block" />
 
+                  <NavLink
+                    to="/account/admin"
+                    end
+                    className={({ isActive }) =>
+                      cn(
+                        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "hover:bg-muted",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground",
+                      )
+                    }
+                  >
+                    <ShieldCheck className="size-4" />
+                    Admin Dashboard
+                  </NavLink>
+                </>
+              )}
+
+              {/*  */}
               <Separator className="my-1 hidden lg:block" />
 
               <button
