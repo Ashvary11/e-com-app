@@ -10,19 +10,18 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../components/ui/pagination";
-// import ProductCard from "@/components/ProductCard";
 import ProductSkeleton from "@/components/ProductSkeleton";
 import ProductFilterAndSearch from "@/components/ProductFilterAndSearch";
 import { HoverEffect } from "@/components/ui/card-hover-effect";
+// import ProductCard from "@/components/ProductCard";
+import { SlidersHorizontal, ChevronDown } from "lucide-react";
 
 function Products() {
   const dispatch = useDispatch();
-
-  const [showFloatingPagination, setShowFloatingPagination] = useState(false);
-
   const { products, pagination, filters, loading, error } = useSelector(
     (state) => state.products,
   );
+  const [showFloatingPagination, setShowFloatingPagination] = useState(false);
 
   useEffect(() => {
     dispatch(
@@ -46,6 +45,7 @@ function Products() {
     pagination.limit,
   ]);
 
+  // for nav menu show
   useEffect(() => {
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
@@ -87,19 +87,34 @@ function Products() {
 
   return (
     <Container className="py-8 bg-white/20 mt-5 rounded-lg">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+      {/* Header + Search */}
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
 
-        {!loading && (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Showing {products.length} of {pagination.total} products
-          </p>
-        )}
+          {!loading && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Showing {products.length} of {pagination.total} products
+            </p>
+          )}
+        </div>
+
+        {/* Search and filters */}
+        <details className="group relative shrink-0">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg border bg-white/70 px-3 py-2 text-sm font-medium transition hover:bg-white">
+            <SlidersHorizontal size={16} />
+            {/* <span className="hidden sm:inline">Search & Filters</span> */}
+            <ChevronDown
+              size={14}
+              className="transition-transform group-open:rotate-180"
+            />
+          </summary>
+
+          <div className="absolute right-0 top-full z-40 mt-2 w-[min(90vw,36rem)] rounded-xl border p-4 shadow-lg">
+            <ProductFilterAndSearch />
+          </div>
+        </details>
       </div>
-
-      {/* Search and filters */}
-      <ProductFilterAndSearch />
 
       {/* Error */}
       {error && (

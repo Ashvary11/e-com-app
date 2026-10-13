@@ -7,7 +7,6 @@ export const mergeCartApi = async (items) => {
       quantity: item.quantity,
     })),
   });
-
   return response.data;
 };
 
@@ -23,6 +22,5 @@ export const updateDbCartApi = async (items) => {
       quantity: item.quantity,
     })),
   });
-
   return response.data;
 };

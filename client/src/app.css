@@ -1,0 +1,110 @@
+.custom-bg {
+  --color: #e1e1e18c;
+
+  width: 100%;
+  height: 100%;
+  background-color: #f3f3f37c;
+
+  background-image:
+    linear-gradient(
+      0deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    );
+
+  background-size: 55px 55px;
+}
+
+/* loader */
+/* Loader */
+.spinner {
+  position: relative;
+  width: 100px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner span {
+  position: absolute;
+  top: 50%;
+  width: 40px;
+  height: 9px;
+  background: #334155;
+  border-radius: 2px;
+  animation: dominos 1s ease infinite;
+  box-shadow: 1px 2px 3px rgb(0 0 0 / 15%);
+}
+
+.spinner span:nth-child(1) {
+  left: 100px;
+  animation-delay: 0.125s;
+}
+
+.spinner span:nth-child(2) {
+  left: 87px;
+  animation-delay: 0.3s;
+}
+
+.spinner span:nth-child(3) {
+  left: 74px;
+  animation-delay: 0.425s;
+}
+
+.spinner span:nth-child(4) {
+  left: 61px;
+  animation-delay: 0.54s;
+}
+
+.spinner span:nth-child(5) {
+  left: 48px;
+  animation-delay: 0.665s;
+}
+
+.spinner span:nth-child(6) {
+  left: 35px;
+  animation-delay: 0.79s;
+}
+
+.spinner span:nth-child(7) {
+  left: 22px;
+  animation-delay: 0.915s;
+}
+
+.spinner span:nth-child(8) {
+  left: 9px;
+}
+
+@keyframes dominos {
+  50% {
+    opacity: 0.7;
+  }
+
+  75% {
+    transform: rotate(90deg);
+  }
+
+  80% {
+    opacity: 1;
+  }
+}

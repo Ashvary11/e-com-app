@@ -1,62 +1,80 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 
-import Home from "../pages/Home";
-import Products from "../pages/Products";
-import ProductDetails from "../pages/ProductDetails";
-import Cart from "../pages/Cart";
-import Login from "../pages/auth/Login";
-import NotFound from "../pages/NotFound";
-import Checkout from "../pages/Checkout";
-import Register from "@/pages/auth/Register";
-import VerifyEmail from "@/pages/auth/VerifyEmail";
-import ForgotPassword from "@/pages/auth/ForgotPassword";
 import ProtectedRoute from "@/pages/auth/ProtectedRoute";
-import AccountLayout from "@/pages/account/AccountLayout";
-import Profile from "@/pages/account/Profile";
-import Order from "@/pages/account/Order";
-import Security from "@/pages/account/Security";
-import Sessions from "@/pages/account/Sessions";
-import OrderDetails from "@/pages/account/OrderDetails";
-import AdminDashboard from "@/pages/account/(admin)/AdminDashboard";
 import AdminRoute from "./AdminRoute";
-import AdminLayout from "@/pages/account/(admin)/AdminLayout";
-import AdminProducts from "@/pages/account/(admin)/AdminProducts";
-import AdminOrders from "@/pages/account/(admin)/AdminOrders";
-import AdminUsers from "@/pages/account/(admin)/AdminUsers";
+import Loader from "@/components/ui/loader.jsx";
+
+// Public pages
+const Home = lazy(() => import("../pages/Home"));
+const Products = lazy(() => import("../pages/Products"));
+const ProductDetails = lazy(() => import("../pages/ProductDetails"));
+const Cart = lazy(() => import("../pages/Cart"));
+const Checkout = lazy(() => import("../pages/Checkout"));
+const NotFound = lazy(() => import("../pages/NotFound"));
+
+// Auth pages
+const Login = lazy(() => import("../pages/auth/Login"));
+const Register = lazy(() => import("@/pages/auth/Register"));
+const VerifyEmail = lazy(() => import("@/pages/auth/VerifyEmail"));
+const ForgotPassword = lazy(() => import("@/pages/auth/ForgotPassword"));
+
+// Account pages
+const AccountLayout = lazy(() => import("@/pages/account/AccountLayout"));
+const Profile = lazy(() => import("@/pages/account/Profile"));
+const Order = lazy(() => import("@/pages/account/Order"));
+const Security = lazy(() => import("@/pages/account/Security"));
+const Sessions = lazy(() => import("@/pages/account/Sessions"));
+const OrderDetails = lazy(() => import("@/pages/account/OrderDetails"));
+
+// Admin pages
+const AdminDashboard = lazy(
+  () => import("@/pages/account/(admin)/AdminDashboard"),
+);
+const AdminLayout = lazy(() => import("@/pages/account/(admin)/AdminLayout"));
+const AdminProducts = lazy(
+  () => import("@/pages/account/(admin)/AdminProducts"),
+);
+const AdminOrders = lazy(() => import("@/pages/account/(admin)/AdminOrders"));
+const AdminUsers = lazy(() => import("@/pages/account/(admin)/AdminUsers"));
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
+    <Suspense fallback={ <Loader/>}>
+      <Routes>
+        <Route path="/" element={<Home />} />
 
-      <Route path="/products" element={<Products />} />
-      <Route path="/products/:slug" element={<ProductDetails />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:slug" element={<ProductDetails />} />
 
-      <Route path="/cart" element={<Cart />} />
-      <Route path="/checkout" element={<Checkout />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
 
-      {/* Auth */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* Auth */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      <Route path="order/:orderNumber" element={<OrderDetails />} />
-      {/* Profile + Admin*/}
-      <Route element={<ProtectedRoute />}>
-        <Route path="/account" element={<AccountLayout />}>
-          <Route index element={<Profile />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="orders" element={<Order />} />
-          <Route path="orders/:orderNumber" element={<OrderDetails />} />
-          <Route path="security" element={<Security />} />
-          <Route path="sessions" element={<Sessions />} />
+        <Route path="order/:orderNumber" element={<OrderDetails />} />
 
-          {/* Admin-only nested routes */}
+        {/* Users routes*/}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/account" element={<AccountLayout />}>
+            <Route index element={<Profile />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="orders" element={<Order />} />
+            <Route path="orders/:orderNumber" element={<OrderDetails />} />
+            <Route path="security" element={<Security />} />
+            <Route path="sessions" element={<Sessions />} />
+
+            {/* Admin-only nested routes */}
+          </Route>
+
+          {/* Admin Routes*/}
           <Route element={<AdminRoute />}>
-            <Route path="admin" element={<AdminLayout />}>
+            <Route path="account/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-
               <Route
                 path="products"
                 element={<AdminProducts title="Products" />}
@@ -66,10 +84,10 @@ function AppRoutes() {
             </Route>
           </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 

@@ -25,7 +25,6 @@ import {
   otpLimiter,
   passwordChangeLimiter,
   passwordRecoveryLimiter,
-  refreshLimiter,
 } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
@@ -54,7 +53,7 @@ router.post("/logout-all", authMiddleware, logoutFromEverywhere);
 router.get("/me", authMiddleware, me);
 router.get("/active-sessions", authMiddleware, getActiveSessions);
 
-router.post("/refresh",refreshLimiter, refreshToken);
+router.post("/refresh", refreshToken);
 router.delete("/account-delete", authMiddleware, deleteAccount);
 router.delete("/sessions/:sessionId", authMiddleware, revokeSession);
 

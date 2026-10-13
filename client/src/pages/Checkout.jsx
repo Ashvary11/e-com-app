@@ -24,15 +24,14 @@ const initialForm = {
   country: "India",
 };
 
-const CHECKOUT_IDEMPOTENCY_KEY = "cartsphere_checkout_attempt";
+const CHECKOUT_IDEMPOTENCY_KEY = "cartsphere_checkout_cart";
 
 function FieldError({ message }) {
   if (!message) return null;
-
   return <p className="mt-1.5 text-sm text-destructive">{message}</p>;
 }
 
-const getCartSignature = (items) =>
+const cartSignatureFn = (items) =>
   JSON.stringify(
     items
       .map((item) => ({
@@ -43,12 +42,12 @@ const getCartSignature = (items) =>
   );
 
 const getCheckoutIdempotencyKey = (cartItems) => {
-  const cartSignature = getCartSignature(cartItems);
-  const saved = sessionStorage.getItem(CHECKOUT_IDEMPOTENCY_KEY);
+  const cartSignature = cartSignatureFn(cartItems);
+  const saved_cart_signature = sessionStorage.getItem(CHECKOUT_IDEMPOTENCY_KEY);
 
-  if (saved) {
+  if (saved_cart_signature) {
     try {
-      const parsed = JSON.parse(saved);
+      const parsed = JSON.parse(saved_cart_signature);
       if (parsed.cartSignature === cartSignature && parsed.key) {
         return parsed.key;
       }
@@ -219,11 +218,7 @@ function Checkout() {
               dispatch(clearCart());
               localStorage.removeItem("cartsphere-cart");
               sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
-
               toast.success("Payment successful");
-
-              // Payment is confirmed, so now clear the cart.
-              // We'll add the actual Redux clearCart dispatch next.
               navigate(`/account/orders/${payment.orderNumber}`);
             }
           } catch (error) {
@@ -261,22 +256,17 @@ function Checkout() {
       // Map backend Zod field errors to matching inputs.
       if (data?.errors) {
         const backendErrors = {};
-
         Object.entries(data.errors).forEach(([field, messages]) => {
           if (Array.isArray(messages) && messages.length > 0) {
             backendErrors[field] = messages[0];
           }
         });
-
         setErrors((previous) => ({
           ...previous,
           ...backendErrors,
         }));
-
         const firstError = Object.values(backendErrors)[0];
-
         toast.error(firstError || data.message || "Invalid order details");
-
         return;
       }
 

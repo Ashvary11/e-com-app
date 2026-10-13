@@ -35,16 +35,10 @@ export default function ProductFilterAndSearch() {
   const [searchInput, setSearchInput] = useState(filters.search);
   const [localPriceRange, setLocalPriceRange] = useState(null);
 
-  // Fetch filter options.
   useEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchPriceRange());
   }, [dispatch]);
-
-  // Keep the search input synchronized with Redux.
-  //   useEffect(() => {
-  //     setSearchInput(filters.search);
-  //   }, [filters.search]);
 
   // Debounce search.
   useEffect(() => {
@@ -124,7 +118,7 @@ export default function ProductFilterAndSearch() {
     }).format(price);
 
   return (
-    <div className="mb-6 space-y-4 rounded-2xl border border-slate-200/80 bg-slate-50/95 p-3 shadow-sm sm:p-5">
+    <div className="space-y-4 rounded-xl border bg-mauve-700/50 p-3 shadow-sm sm:p-4">
       {/* Search, category and sorting */}
       <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
         <div className="space-y-3">
@@ -220,7 +214,6 @@ export default function ProductFilterAndSearch() {
               </p>
 
               <Button
-              
                 type="button"
                 size="sm"
                 onClick={handleApplyPrice}

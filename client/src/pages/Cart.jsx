@@ -28,7 +28,6 @@ function Cart() {
 
   const handleIncrease = (id) => {
     dispatch(increaseQuantity(id));
-
     if (isAuthenticated) {
       dispatch(scheduleDbCartUpdate());
     }
@@ -36,7 +35,6 @@ function Cart() {
 
   const handleDecrease = (id) => {
     dispatch(decreaseQuantity(id));
-
     if (isAuthenticated) {
       dispatch(scheduleDbCartUpdate());
     }
@@ -47,9 +45,9 @@ function Cart() {
     if (isAuthenticated) {
       dispatch(scheduleDbCartUpdate());
     }
-
     toast.success("Item removed from cart");
   };
+
   return (
     <Container>
       <section className="py-8 sm:py-12">
@@ -162,9 +160,7 @@ function Cart() {
                 </Card>
               ))}
 
-              {/* <Button  asChild variant="outline" onClick={handleClearCart}>
-                Clear Cart
-              </Button> */}
+          
             </div>
 
             {/* Summary */}

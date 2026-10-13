@@ -10,34 +10,34 @@ export const sendEmail = async (emailType, data, to) => {
       throw new Error(`No email template found for type: ${emailType}`);
     }
     const FROM_NAME_MAP = {
-      verifyMail: "E-com Accounts",
-      welcomeMail: "E-com",
+      verifyMail: "CartSphere Accounts",
+      welcomeMail: "CartSphere",
 
-      resetPasswordMail: "E-com Security",
-      passwordResetSuccessMail: "E-com Security",
-      passwordChangedMail: "E-com Security",
-      newLoginMail: "E-com Security",
-      accountDeletedMail: "E-com Security",
+      resetPasswordMail: "CartSphere Security",
+      passwordResetSuccessMail: "CartSphere Security",
+      passwordChangedMail: "CartSphere Security",
+      newLoginMail: "CartSphere Security",
+      accountDeletedMail: "CartSphere Security",
 
-      orderConfirmMail: "E-com Orders",
-      orderShipped: "E-com Shipping",
-      invoice: "E-com Billing",
-      refund: "E-com Refunds",
+      orderConfirmMail: "CartSphere Orders",
+      orderShipped: "CartSphere Shipping",
+      invoice: "CartSphere Billing",
+      refund: "CartSphere Refunds",
 
-      contactUs: "E-com Support",
+      contactUs: "CartSphere Support",
     };
-    const fromName = FROM_NAME_MAP[emailType] || "E-com";
+    const fromName = FROM_NAME_MAP[emailType] || "CartSphere";
 
     const { subject, html, bcc } = selectedEmailTemplateFn(data);
 
     const emailOptions = {
-      // from: `E-com <${process.env.MAIL_FROM}>`,
+      // from: `CartSphere <${process.env.MAIL_FROM}>`,
       from: {
         name: fromName,
         address: process.env.MAIL_FROM,
       },
       to,
-      replyTo: process.env.MAIL_FROM,
+      replyTo: process.env.REPLY_TO,
       subject,
       html,
       ...(bcc && { bcc }),

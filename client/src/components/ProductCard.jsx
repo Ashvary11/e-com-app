@@ -102,8 +102,6 @@ function ProductCard({ product }) {
             </span>
           )}
         </div>
-
-        {/* Low stock notice */}
         {stock > 0 && stock <= 5 && (
           <p className="text-[11px] text-muted-foreground">Only {stock} left</p>
         )}
