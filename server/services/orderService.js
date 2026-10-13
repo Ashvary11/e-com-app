@@ -46,8 +46,6 @@ export const cancelUserOrder = async (
     };
   }
 
-  // A paid online order will eventually require a Razorpay refund.
-  // Payment/refund handling will be added with the payment gateway.
   if (order.paymentMethod === "razorpay" && order.paymentStatus === "paid") {
     return {
       error: "REFUND_REQUIRED",

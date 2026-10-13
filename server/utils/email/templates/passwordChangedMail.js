@@ -2,7 +2,7 @@ const passwordChangedMail = ({ name }) => {
   const subject = "Your CartSphere password was changed";
 
   const text = `
-Hi ${name},
+Hi ${name || "there"},
 
 Your CartSphere password has been successfully changed.
 

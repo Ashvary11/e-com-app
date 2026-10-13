@@ -2,7 +2,7 @@ const passwordResetSuccessMail = ({ name }) => {
   const subject = "Your CartSphere password was reset";
 
   const text = `
-Hi ,
+Hi ${name || "there"},
 
 Your CartSphere password has been successfully reset.
 

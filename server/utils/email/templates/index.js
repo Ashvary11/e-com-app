@@ -13,8 +13,10 @@ const emailTemplates = {
 
   resetPasswordMail,
   passwordResetSuccessMail,
+
   passwordChangedMail, // from dashboard changed
   newLoginMail,
+
   accountDeletedMail,
 
   orderConfirmMail,

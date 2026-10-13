@@ -11,7 +11,7 @@ Your email verification OTP is:
 
 ${otp}
 
-This OTP is valid for 24 hours.
+This OTP is valid for 5 minutes.
 
 If you did not create a CartSphere account, you can safely ignore this email.
 
@@ -33,7 +33,7 @@ If you did not create a CartSphere account, you can safely ignore this email.
 
   <!-- Preheader (hidden preview text) -->
   <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f4f4f5;">
-    Your CartSphere verification code is ${otp}. It expires in 24 hours.
+    Your CartSphere verification code is ${otp}. It expires in 5 minutes.
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5; padding:40px 16px;">
@@ -79,7 +79,7 @@ If you did not create a CartSphere account, you can safely ignore this email.
               </table>
 
               <p style="margin:0 0 12px; font-size:14px; line-height:22px; color:#52525b;">
-                This code expires in <strong>24 hours</strong>.
+                This code expires in <strong>5 minutes</strong>.
               </p>
 
               <p style="margin:0; font-size:14px; line-height:22px; color:#71717a;">

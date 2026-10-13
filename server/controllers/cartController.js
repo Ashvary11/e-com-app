@@ -82,12 +82,15 @@ export const mergeCart = async (req, res) => {
       cart = new Cart({ userId, items: [] });
     }
 
-    const quantities = new Map();
+    const quantities = {};
 
+    // Get existing cart quantities.
     for (const item of cart.items) {
-      quantities.set(item.productId.toString(), item.quantity);
+      const id = item.productId.toString();
+      quantities[id] = item.quantity;
     }
 
+    // Add guest cart quantities.
     for (const item of items) {
       if (
         !item?.productId ||
@@ -98,35 +101,32 @@ export const mergeCart = async (req, res) => {
       }
 
       const id = item.productId.toString();
-
-      quantities.set(id, (quantities.get(id) || 0) + item.quantity);
+      quantities[id] = (quantities[id] || 0) + item.quantity;
     }
 
-    const productIds = [...quantities.keys()];
+    const productIds = Object.keys(quantities);
 
     const products = await Product.find({
       _id: { $in: productIds },
       isActive: true,
+      stock: { $gt: 0 },
     })
       .select("_id stock")
       .lean();
 
-    const productMap = new Map(
-      products.map((product) => [product._id.toString(), product]),
-    );
+    const updatedItems = [];
 
-    cart.items = productIds
-      .map((id) => {
-        const product = productMap.get(id);
+    // Keep active products and limit quantities to available stock.
+    for (const product of products) {
+      const id = product._id.toString();
 
-        if (!product || product.stock <= 0) return null;
+      updatedItems.push({
+        productId: product._id,
+        quantity: Math.min(quantities[id], product.stock),
+      });
+    }
 
-        return {
-          productId: product._id,
-          quantity: Math.min(quantities.get(id), product.stock),
-        };
-      })
-      .filter(Boolean);
+    cart.items = updatedItems;
 
     await cart.save();
 
@@ -158,10 +158,8 @@ export const updateCart = async (req, res) => {
       });
     }
 
-    const userId = req.user.id;
-    const quantities = new Map();
+    const quantities = {};
 
-    // Validate items and combine duplicate product IDs.
     for (const item of items) {
       if (
         !item?.productId ||
@@ -175,43 +173,38 @@ export const updateCart = async (req, res) => {
       }
 
       const id = item.productId.toString();
-
-      quantities.set(id, (quantities.get(id) || 0) + item.quantity);
+      quantities[id] = (quantities[id] || 0) + item.quantity;
     }
 
-    const productIds = [...quantities.keys()];
+    const productIds = Object.keys(quantities);
 
     const products = await Product.find({
       _id: { $in: productIds },
       isActive: true,
+      stock: { $gt: 0 },
     })
       .select("_id stock")
       .lean();
 
-    const productMap = new Map(
-      products.map((product) => [product._id.toString(), product]),
-    );
+    const updatedItems = [];
 
-    // Keep only active products and enforce stock limits.
-    const updatedItems = productIds
-      .map((id) => {
-        const product = productMap.get(id);
+    // Keep active products and limit quantities to available stock.
+    for (const product of products) {
+      const id = product._id.toString();
 
-        if (!product || product.stock <= 0) {
-          return null;
-        }
+      updatedItems.push({
+        productId: product._id,
+        quantity: Math.min(quantities[id], product.stock),
+      });
+    }
 
-        return {
-          productId: product._id,
-          quantity: Math.min(quantities.get(id), product.stock),
-        };
-      })
-      .filter(Boolean);
-
-    let cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId: req.user.id });
 
     if (!cart) {
-      cart = new Cart({ userId, items: updatedItems });
+      cart = new Cart({
+        userId: req.user.id,
+        items: updatedItems,
+      });
     } else {
       cart.items = updatedItems;
     }

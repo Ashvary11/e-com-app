@@ -1,8 +1,8 @@
-const resetPasswordMail = ({ name, otp }) => {
+const resetPasswordMail = ({ name = "there", otp }) => {
   const subject = "Reset your CartSphere password";
 
   const text = `
-Hi ,
+Hi ${name},
 
 We received a request to reset your CartSphere password.
 
@@ -10,7 +10,7 @@ Your password reset OTP is:
 
 ${otp}
 
-This OTP is valid for 15 minutes.
+This OTP is valid for 5 minutes.
 
 If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
 
@@ -120,7 +120,7 @@ If you did not request a password reset, you can safely ignore this email. Your 
                 style="margin:0 0 12px; font-size:14px; line-height:22px; color:#52525b;"
               >
                 This password reset code is valid for
-                <strong>15 minutes</strong>.
+                <strong>5 minutes</strong>.
               </p>
 
               <p

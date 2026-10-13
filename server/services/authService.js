@@ -17,7 +17,7 @@ import { throwError } from "../utils/errors.js";
 import { verifyGoogleToken } from "./googleAuthService.js";
 
 export const REFRESH_TOKEN_DAYS = Number(
-  process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || 30,
+  process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || 7,
 );
 
 export const userRegistrationFn = async ({ name, email, password }) => {
@@ -47,7 +47,7 @@ export const userRegistrationFn = async ({ name, email, password }) => {
 
   const otp = generateOtp();
   const hashOtp = generateHash(otp);
-  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
   const user = await User.create({
     name,
@@ -140,7 +140,7 @@ export const resendEmailOtpFn = async (email) => {
 
   const otp = generateOtp(); // e.g. "482913"
   const hashedOtp = generateHash(otp);
-  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+  const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
 
   user.emailVerificationOtpHash = hashedOtp;
   user.emailVerificationOtpExpiresAt = otpExpiresAt;
@@ -203,7 +203,7 @@ export const forgotPasswordFn = async (email) => {
 
   const otp = generateOtp(); // e.g. "482913"
   const hashedOtp = generateHash(otp);
-  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+  const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
 
   user.passwordResetOtpHash = hashedOtp;
   user.passwordResetOtpExpiresAt = otpExpiresAt;
@@ -326,7 +326,7 @@ export const createUserSession = async ({ user, userAgent, ipAddress }) => {
   const refreshToken = generateRefreshToken();
   const refreshTokenHash = generateHash(refreshToken);
   const sessionExpiresAt = new Date(
-    Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+    Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000, //7days
   );
 
   if (session) {
@@ -546,7 +546,6 @@ export const googleLoginFn = async ({ credential, userAgent, ipAddress }) => {
         role: "user",
         isEmailVerified: true,
       });
-      let isNewUser = true; //just for alert in client
       authIdentity = await AuthIdentity.create({
         userId: user._id,
         provider: "google",
@@ -592,7 +591,7 @@ export const setPasswordFn = async ({
     throwError("Account inactive or blocked.", 403);
   }
 
-  // Only accounts without an existing password can use this function.
+  
   if (user.hasPassword === true || user.password) {
     throwError(
       "Your account already has a password. Use Change Password.",

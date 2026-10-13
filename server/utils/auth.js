@@ -16,16 +16,19 @@ export const comparePassword = async (password, passwordHash) => {
 export const generateOtp = (length = 6) => {
   const max = 10 ** length;
   const num = crypto.randomInt(0, max);
-  return num.toString().padStart(length, "0");
+  const otp = num.toString().padStart(length, "0");
+  return otp;
+};
+
+//  ------------sessionID ------------
+export const generateSessionId = () => {
+  return crypto.randomUUID();
 };
 // -------------
 export const generateHash = (data) => {
   return crypto.createHash("sha256").update(data).digest("hex");
 };
-//  ------------sessionID ------------
-export const generateSessionId = () => {
-  return crypto.randomUUID();
-};
+
 //  ------------token ------------
 export const generateRandomToken = (bytes = 32) => {
   return crypto.randomBytes(bytes).toString("hex");

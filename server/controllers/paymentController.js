@@ -334,7 +334,6 @@ export const razorpayWebhook = async (req, res) => {
 
     await clearUserCart(payment.userId);
 
-    // await sendEmail("orderConfirmMail", data, to);
     await sendOrderMailFn(order);
 
     return res.status(200).json({

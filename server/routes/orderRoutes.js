@@ -7,16 +7,20 @@ import {
   getOrders,
 } from "../controllers/orderController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
- 
-const router = express.Router();
-// Create order
-router.post("/", authMiddleware, createOrder);
+import { orderMutationLimiter } from "../middleware/rateLimiter.js";
 
-// User orders
+const router = express.Router();
+
+router.post("/", authMiddleware, orderMutationLimiter, createOrder);
+
 router.get("/", authMiddleware, getOrders);
 router.get("/:orderNumber", authMiddleware, getOrder);
-router.patch("/:orderNumber/cancel", authMiddleware, cancelOrder);
 
- 
+router.patch(
+  "/:orderNumber/cancel",
+  authMiddleware,
+  orderMutationLimiter,
+  cancelOrder,
+);
 
 export default router;

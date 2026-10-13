@@ -1,8 +1,10 @@
 import { randomBytes } from "node:crypto";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
+import Order from "../models/Order.js";
 import mongoose from "mongoose";
 import Session from "../models/Session.js";
+import Payment from "../models/Payment.js";
 
 // Convert product names into URL-friendly slugs.
 const slugify = (value) =>
@@ -14,7 +16,6 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "product";
 
-// Generate a unique slug when one is not provided.
 const generateUniqueSlug = async (name) => {
   const baseSlug = slugify(name);
   let slug = baseSlug;
@@ -28,7 +29,6 @@ const generateUniqueSlug = async (name) => {
   return slug;
 };
 
-// Generate a SKU when one is not provided.
 const generateSku = () => `CS-${randomBytes(4).toString("hex").toUpperCase()}`;
 
 // Normalize manually supplied slugs.
@@ -38,11 +38,9 @@ const normalizeProductData = (data) => {
   if (normalized.slug !== undefined) {
     normalized.slug = slugify(normalized.slug);
   }
-
   return normalized;
 };
 
-// Handle duplicate unique-index errors from MongoDB.
 const handleProductError = (error, res, action) => {
   if (error.code === 11000) {
     const duplicateField = Object.keys(error.keyPattern || {})[0];
@@ -76,7 +74,6 @@ const handleProductError = (error, res, action) => {
   });
 };
 
-// GET /api/admin/products
 // List all products, including inactive products.
 export const getAdminProducts = async (req, res) => {
   try {
@@ -162,7 +159,6 @@ export const getAdminProducts = async (req, res) => {
   }
 };
 
-// GET /api/admin/products/:id
 // Get one product, including inactive products.
 export const getAdminProductById = async (req, res) => {
   try {
@@ -193,13 +189,10 @@ export const getAdminProductById = async (req, res) => {
   }
 };
 
-// POST /api/admin/products
-// Create a new product.
 export const createProduct = async (req, res) => {
   try {
     const data = normalizeProductData(req.body);
 
-    // Generate missing values without changing the schema.
     if (!data.slug) {
       data.slug = await generateUniqueSlug(data.name);
     }
@@ -220,8 +213,6 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// PATCH /api/admin/products/:id
-// Update editable product fields.
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -235,14 +226,11 @@ export const updateProduct = async (req, res) => {
 
     const data = normalizeProductData(req.body);
 
-    // Do not change the slug automatically when the name changes.
-    // Existing product URLs remain stable unless the slug is supplied.
-
     const product = await Product.findByIdAndUpdate(
       id,
       { $set: data },
       {
-        new: true,
+        returnDocument: true,
         runValidators: true,
         context: "query",
       },
@@ -265,7 +253,6 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-// PATCH /api/admin/products/:id/status
 // Activate or deactivate a product.
 export const updateProductStatus = async (req, res) => {
   try {
@@ -283,7 +270,7 @@ export const updateProductStatus = async (req, res) => {
       id,
       { $set: { isActive } },
       {
-        new: true,
+        returnDocument: true,
         runValidators: true,
       },
     );
@@ -307,7 +294,7 @@ export const updateProductStatus = async (req, res) => {
   }
 };
 
-//  -------------------- USers-------------------
+//  -------------------- USERS-------------------
 
 export const getAdminUsers = async (req, res) => {
   try {
@@ -320,7 +307,6 @@ export const getAdminUsers = async (req, res) => {
       limit = "10",
     } = req.query;
 
-    // Validate role filter.
     const allowedRoles = ["user", "manager", "admin"];
 
     if (role !== "all" && !allowedRoles.includes(role)) {
@@ -330,7 +316,6 @@ export const getAdminUsers = async (req, res) => {
       });
     }
 
-    // Validate account status filter.
     const allowedStatuses = ["active", "inactive", "blocked"];
 
     if (status !== "all" && !allowedStatuses.includes(status)) {
@@ -340,7 +325,6 @@ export const getAdminUsers = async (req, res) => {
       });
     }
 
-    // Validate sorting.
     const allowedSorts = ["newest", "oldest", "name-asc", "name-desc"];
 
     if (!allowedSorts.includes(sort)) {
@@ -350,7 +334,6 @@ export const getAdminUsers = async (req, res) => {
       });
     }
 
-    // Normalize pagination values.
     const currentPage = Math.max(1, Number.parseInt(page, 10) || 1);
     const pageSize = Math.min(
       100,
@@ -372,7 +355,6 @@ export const getAdminUsers = async (req, res) => {
       filter.isBlocked = true;
     }
 
-    // Escape user input before using it in a regular expression.
     const normalizedSearch = search.trim().slice(0, 100);
 
     if (normalizedSearch) {
@@ -432,7 +414,7 @@ export const getAdminUsers = async (req, res) => {
     });
   }
 };
-// GET /api/admin/users/:id
+
 export const getAdminUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -478,7 +460,6 @@ export const getAdminUserById = async (req, res) => {
   }
 };
 
-// PATCH /api/admin/users/:id/role
 export const updateAdminUserRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -570,7 +551,6 @@ export const updateAdminUserRole = async (req, res) => {
   }
 };
 
-// PATCH /api/admin/users/:id/status
 export const updateAdminUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -676,7 +656,6 @@ export const updateAdminUserStatus = async (req, res) => {
   }
 };
 
-// POST /api/admin/users/:id/revoke-sessions
 export const revokeAdminUserSessions = async (req, res) => {
   try {
     const { id } = req.params;
@@ -725,6 +704,654 @@ export const revokeAdminUserSessions = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to revoke user sessions.",
+    });
+  }
+};
+
+// -------------- Order-------------
+
+const ADMIN_ORDER_STATUSES = [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+];
+
+const ADMIN_PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"];
+
+// Only allow forward progress, or cancellation where safe.
+// A delivered or cancelled order cannot be reopened.
+const ALLOWED_ORDER_TRANSITIONS = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["processing", "cancelled"],
+  processing: ["shipped"],
+  shipped: ["delivered"],
+  delivered: [],
+  cancelled: [],
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getDateFilter = (dateFrom, dateTo) => {
+  const filter = {};
+
+  if (dateFrom) {
+    const from = new Date(dateFrom);
+
+    if (Number.isNaN(from.getTime())) {
+      return { error: "Invalid dateFrom" };
+    }
+
+    from.setUTCHours(0, 0, 0, 0);
+    filter.$gte = from;
+  }
+
+  if (dateTo) {
+    const to = new Date(dateTo);
+
+    if (Number.isNaN(to.getTime())) {
+      return { error: "Invalid dateTo" };
+    }
+
+    // Include the entire selected UTC calendar day.
+    to.setUTCHours(23, 59, 59, 999);
+    filter.$lte = to;
+  }
+
+  if (filter.$gte && filter.$lte && filter.$gte > filter.$lte) {
+    return { error: "dateFrom cannot be after dateTo" };
+  }
+
+  return { filter };
+};
+
+// GET /admin/orders
+export const getAdminOrders = async (req, res) => {
+  try {
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const limit = Number.parseInt(req.query.limit, 10) || 10;
+
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination parameters",
+      });
+    }
+
+    const {
+      search = "",
+      orderStatus,
+      paymentStatus,
+      dateFrom,
+      dateTo,
+    } = req.query;
+
+    if (orderStatus && !ADMIN_ORDER_STATUSES.includes(orderStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status",
+      });
+    }
+
+    if (paymentStatus && !ADMIN_PAYMENT_STATUSES.includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment status",
+      });
+    }
+
+    const query = {};
+
+    if (orderStatus) query.orderStatus = orderStatus;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
+
+    if (dateFrom || dateTo) {
+      const dateResult = getDateFilter(dateFrom, dateTo);
+
+      if (dateResult.error) {
+        return res.status(400).json({
+          success: false,
+          message: dateResult.error,
+        });
+      }
+
+      query.createdAt = dateResult.filter;
+    }
+
+    const normalizedSearch = String(search).trim();
+
+    if (normalizedSearch) {
+      const regex = new RegExp(escapeRegex(normalizedSearch), "i");
+
+      query.$or = [
+        { orderNumber: regex },
+        { "customer.email": regex },
+        { "shippingAddress.fullName": regex },
+        { "shippingAddress.phone": regex },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find(query)
+        .select(
+          [
+            "orderNumber",
+            "userId",
+            "customer",
+            "shippingAddress.fullName",
+            "items",
+            "subtotal",
+            "shipping",
+            "total",
+            "orderStatus",
+            "paymentStatus",
+            "paymentMethod",
+            "createdAt",
+            "updatedAt",
+            "paidAt",
+            "cancelledAt",
+          ].join(" "),
+        )
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      Order.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Get admin orders error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+    });
+  }
+};
+
+export const getAdminOrderByNumber = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    const order = await Order.findOne({ orderNumber }).lean();
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const payment = await Payment.findOne({
+      orderId: order._id,
+    })
+      .select(
+        [
+          "amount",
+          "currency",
+          "method",
+          "status",
+          "razorpayOrderId",
+          "razorpayPaymentId",
+          "failureReason",
+          "paidAt",
+          "refundedAt",
+          "createdAt",
+          "updatedAt",
+        ].join(" "),
+      )
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...order,
+        payment: payment || null,
+      },
+    });
+  } catch (error) {
+    console.error("Get admin order details error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch order details",
+    });
+  }
+};
+
+export const updateAdminOrderStatus = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const nextStatus = req.body?.orderStatus;
+
+    if (
+      typeof nextStatus !== "string" ||
+      !ADMIN_ORDER_STATUSES.includes(nextStatus)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid orderStatus is required",
+      });
+    }
+
+    const order = await Order.findOne({ orderNumber });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const currentStatus = order.orderStatus;
+
+    if (currentStatus === nextStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "Order already has this status",
+      });
+    }
+
+    const allowedStatuses = ALLOWED_ORDER_TRANSITIONS[currentStatus] || [];
+
+    if (!allowedStatuses.includes(nextStatus)) {
+      return res.status(400).json({
+        success: false,
+        code: "INVALID_STATUS_TRANSITION",
+        message: `Cannot change order status from ${currentStatus} to ${nextStatus}`,
+      });
+    }
+
+    // Do not advance fulfillment for an unpaid or failed order.
+    // Payment status must be changed only by the payment flow.
+    if (nextStatus !== "cancelled" && order.paymentStatus !== "paid") {
+      return res.status(409).json({
+        success: false,
+        code: "PAYMENT_NOT_COMPLETED",
+        message: "The order must be paid before fulfillment can continue",
+      });
+    }
+
+    // Refunds are not implemented. Never cancel a paid order
+    // through an order-status update.
+    if (nextStatus === "cancelled" && order.paymentStatus === "paid") {
+      return res.status(409).json({
+        success: false,
+        code: "REFUND_REQUIRED",
+        message:
+          "This paid order cannot be cancelled until refund processing is available",
+      });
+    }
+
+    const update = {
+      orderStatus: nextStatus,
+    };
+
+    if (nextStatus === "cancelled") {
+      update.cancelledAt = new Date();
+      update.cancellationReason = "Cancelled by admin";
+    }
+
+    // Compare-and-set prevents overwriting a concurrent status
+    // change made after the order was read.
+    const updatedOrder = await Order.findOneAndUpdate(
+      {
+        _id: order._id,
+        orderStatus: currentStatus,
+        paymentStatus: order.paymentStatus,
+      },
+      { $set: update },
+      {
+        returnDocument: true,
+        runValidators: true,
+      },
+    ).lean();
+
+    if (!updatedOrder) {
+      return res.status(409).json({
+        success: false,
+        code: "ORDER_CHANGED",
+        message:
+          "The order changed while you were updating it. Refresh and try again.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      data: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Update admin order status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update order status",
+    });
+  }
+};
+
+const LOW_STOCK_THRESHOLD = 5;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const parseDateOnly = (value) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+export const getAdminDashboard = async (req, res) => {
+  try {
+    const { range, startDate, endDate } = req.query;
+
+    const hasCustomStart = startDate !== undefined;
+    const hasCustomEnd = endDate !== undefined;
+    const hasCustomRange = hasCustomStart || hasCustomEnd;
+
+    let periodStart;
+    let periodEnd;
+
+    if (hasCustomRange) {
+      if (!hasCustomStart || !hasCustomEnd) {
+        return res.status(400).json({
+          success: false,
+          message: "Both startDate and endDate are required.",
+        });
+      }
+
+      const parsedStart = parseDateOnly(startDate);
+      const parsedEnd = parseDateOnly(endDate);
+
+      if (!parsedStart || !parsedEnd || parsedStart > parsedEnd) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Provide valid dates with startDate before or equal to endDate.",
+        });
+      }
+
+      // The end date is inclusive; the query boundary is exclusive.
+      periodStart = parsedStart;
+      periodEnd = new Date(parsedEnd.getTime() + DAY_MS);
+    } else {
+      const now = new Date();
+      const todayUtc = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
+
+      const presetDays = {
+        "7d": 7,
+        "30d": 30,
+        "90d": 90,
+        "12m": 365,
+      };
+
+      const days = presetDays[range || "30d"];
+
+      if (!days) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid range. Use 7d, 30d, 90d, 12m, or custom dates.",
+        });
+      }
+
+      periodEnd = new Date(todayUtc.getTime() + DAY_MS);
+      periodStart = new Date(periodEnd.getTime() - days * DAY_MS);
+    }
+
+    const periodDuration = periodEnd.getTime() - periodStart.getTime();
+
+    // The comparison period immediately precedes the selected period.
+    const previousStart = new Date(periodStart.getTime() - periodDuration);
+    const previousEnd = new Date(periodStart);
+
+    const currentPeriodFilter = {
+      createdAt: {
+        $gte: periodStart,
+        $lt: periodEnd,
+      },
+    };
+
+    const previousPeriodFilter = {
+      createdAt: {
+        $gte: previousStart,
+        $lt: previousEnd,
+      },
+    };
+
+    // Choose daily buckets for shorter periods and monthly buckets for 12m.
+    const useMonthlyBuckets = !hasCustomRange && range === "12m";
+
+    const bucketFormat = useMonthlyBuckets ? "%Y-%m" : "%Y-%m-%d";
+
+    const [
+      totalUsers,
+      newUsers,
+      totalProducts,
+      activeProducts,
+      lowStockProducts,
+      outOfStockProducts,
+      totalOrders,
+      pendingOrders,
+      cancelledOrders,
+      currentOrderMetrics,
+      previousOrderMetrics,
+      salesTrend,
+      orderStatusResults,
+      recentOrders,
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments(currentPeriodFilter),
+      Product.countDocuments(),
+      Product.countDocuments({ isActive: true }),
+      Product.countDocuments({
+        isActive: true,
+        stock: { $gt: 0, $lte: LOW_STOCK_THRESHOLD },
+      }),
+      Product.countDocuments({ stock: 0 }),
+      Order.countDocuments(),
+      Order.countDocuments({ orderStatus: "pending" }),
+      Order.countDocuments({ orderStatus: "cancelled" }),
+
+      Order.aggregate([
+        { $match: currentPeriodFilter },
+        {
+          $group: {
+            _id: null,
+            orders: { $sum: 1 },
+            paidOrders: {
+              $sum: {
+                $cond: [{ $eq: ["$paymentStatus", "paid"] }, 1, 0],
+              },
+            },
+            paidRevenue: {
+              $sum: {
+                $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$total", 0],
+              },
+            },
+          },
+        },
+      ]),
+
+      Order.aggregate([
+        { $match: previousPeriodFilter },
+        {
+          $group: {
+            _id: null,
+            orders: { $sum: 1 },
+            paidRevenue: {
+              $sum: {
+                $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$total", 0],
+              },
+            },
+          },
+        },
+      ]),
+
+      Order.aggregate([
+        { $match: currentPeriodFilter },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: bucketFormat,
+                date: "$createdAt",
+                timezone: "UTC",
+              },
+            },
+            orders: { $sum: 1 },
+            revenue: {
+              $sum: {
+                $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$total", 0],
+              },
+            },
+          },
+        },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            _id: 0,
+            date: "$_id",
+            orders: 1,
+            revenue: 1,
+          },
+        },
+      ]),
+
+      Order.aggregate([
+        {
+          $group: {
+            _id: "$orderStatus",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+
+      Order.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select(
+          "orderNumber customer shippingAddress.fullName total createdAt paymentStatus orderStatus",
+        )
+        .lean(),
+    ]);
+
+    const currentMetrics = currentOrderMetrics[0] || {
+      orders: 0,
+      paidOrders: 0,
+      paidRevenue: 0,
+    };
+
+    const previousMetrics = previousOrderMetrics[0] || {
+      orders: 0,
+      paidRevenue: 0,
+    };
+
+    // Return zero when the previous period had no activity.
+    // A percentage increase from zero has no finite percentage value.
+    const getChangePercent = (current, previous) => {
+      if (previous === 0) {
+        return current === 0 ? 0 : null;
+      }
+
+      return Number((((current - previous) / previous) * 100).toFixed(2));
+    };
+
+    const statusCounts = {
+      pending: 0,
+      confirmed: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+    };
+
+    for (const item of orderStatusResults) {
+      if (Object.hasOwn(statusCounts, item._id)) {
+        statusCounts[item._id] = item.count;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        overview: {
+          totalUsers,
+          newUsers,
+          totalProducts,
+          activeProducts,
+          lowStockProducts,
+          outOfStockProducts,
+          totalOrders,
+          periodOrders: currentMetrics.orders,
+          paidRevenue: currentMetrics.paidRevenue,
+          averageOrderValue:
+            currentMetrics.paidOrders > 0
+              ? Number(
+                  (
+                    currentMetrics.paidRevenue / currentMetrics.paidOrders
+                  ).toFixed(2),
+                )
+              : 0,
+          pendingOrders,
+          cancelledOrders,
+        },
+        comparison: {
+          revenueChangePercent: getChangePercent(
+            currentMetrics.paidRevenue,
+            previousMetrics.paidRevenue,
+          ),
+          ordersChangePercent: getChangePercent(
+            currentMetrics.orders,
+            previousMetrics.orders,
+          ),
+        },
+        salesTrend,
+        orderStatus: statusCounts,
+        recentOrders,
+      },
+    });
+  } catch (error) {
+    console.error("Get admin dashboard error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch dashboard data.",
     });
   }
 };

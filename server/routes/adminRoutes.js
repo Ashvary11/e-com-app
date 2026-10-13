@@ -14,6 +14,10 @@ import {
   updateAdminUserRole,
   updateAdminUserStatus,
   revokeAdminUserSessions,
+  getAdminOrders,
+  getAdminOrderByNumber,
+  updateAdminOrderStatus,
+  getAdminDashboard,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -39,5 +43,15 @@ router.get("/users/:id", getAdminUserById);
 router.patch("/users/:id/role", updateAdminUserRole);
 router.patch("/users/:id/status", updateAdminUserStatus);
 router.post("/users/:id/revoke-sessions", revokeAdminUserSessions);
+
+// Orders
+router.get("/orders", getAdminOrders);
+router.get("/orders/:orderNumber", getAdminOrderByNumber);
+router.patch("/orders/:orderNumber/status", updateAdminOrderStatus);
+
+
+
+// Store-wide dashboard analytics.
+router.get("/dashboard", getAdminDashboard);
 
 export default router;

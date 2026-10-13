@@ -183,13 +183,12 @@ export const emailLogin = async (req, res) => {
 
     const { email, password } = reqBody.data;
 
-    const { user, jwtToken, refreshToken } = await emailLoginFn({
+    const { jwtToken, refreshToken } = await emailLoginFn({
       email,
       password,
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
     });
-    // sendEmail("newLoginMail", user, email);
 
     return res
       .cookie("accessToken", jwtToken, jwtCookieOptions)
@@ -396,7 +395,7 @@ export const googleLogin = async (req, res) => {
       throwError("Google credential is required.", 400);
     }
 
-    const { user, jwtToken, refreshToken, isNewUser } = await googleLoginFn({
+    const { jwtToken, refreshToken, isNewUser } = await googleLoginFn({
       credential,
       userAgent: req.get("user-agent"),
       ipAddress: req.ip,
@@ -415,7 +414,7 @@ export const googleLogin = async (req, res) => {
     return handleError(error, res);
   }
 };
-
+//for google logged in users
 export const setPassword = async (req, res) => {
   try {
     const reqBody = setPasswordSchema.safeParse(req.body);
@@ -430,7 +429,7 @@ export const setPassword = async (req, res) => {
 
     const { newPassword, confirmPassword } = reqBody.data;
 
-    const user = await setPasswordFn({
+    await setPasswordFn({
       userId: req.user.id,
       newPassword,
       confirmPassword,

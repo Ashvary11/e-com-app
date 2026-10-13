@@ -21,7 +21,7 @@ export const throwError = (
 export const handleError = (error, res) => {
   console.error("Error:", error.message);
 
-  // --- Zod (from safeParse or direct ZodError) ---
+  // --- (ZodError) ---
   if (error.name === "ZodError") {
     return res.status(400).json({
       success: false,

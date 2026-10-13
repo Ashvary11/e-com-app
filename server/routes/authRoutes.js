@@ -20,23 +20,33 @@ import {
 } from "../controllers/authController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
-
-// import { isAuthorizedRole } from "../middleware/roleMiddleware.js";
+import {
+  authLimiter,
+  otpLimiter,
+  passwordChangeLimiter,
+  passwordRecoveryLimiter,
+  refreshLimiter,
+} from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-router.post("/register", registerEmailUser);
-router.post("/verify-email", verifyEmail);
-router.post("/resend-verification", resendEmailOtp);
+router.post("/register", authLimiter, registerEmailUser);
+router.post("/verify-email", otpLimiter, verifyEmail);
+router.post("/resend-verification", otpLimiter, resendEmailOtp);
 
-router.post("/login", emailLogin);
-router.post("/google", googleLogin);
+router.post("/login", authLimiter, emailLogin);
+router.post("/google", authLimiter, googleLogin);
 
-router.post("/forgot-password", forgotPassword); //two time reuse
-router.post("/reset-password", resetPassword);
+router.post("/forgot-password", passwordRecoveryLimiter, forgotPassword); //two time reuse
+router.post("/reset-password", passwordRecoveryLimiter, resetPassword);
 
-router.patch("/change-password", authMiddleware, changePassword);
-router.patch("/set-password", authMiddleware, setPassword);
+router.patch(
+  "/change-password",
+  authMiddleware,
+  passwordChangeLimiter,
+  changePassword,
+);
+router.patch("/set-password", authMiddleware, passwordChangeLimiter, setPassword);
 
 router.post("/logout", authMiddleware, logout);
 router.post("/logout-all", authMiddleware, logoutFromEverywhere);
@@ -44,12 +54,8 @@ router.post("/logout-all", authMiddleware, logoutFromEverywhere);
 router.get("/me", authMiddleware, me);
 router.get("/active-sessions", authMiddleware, getActiveSessions);
 
-router.post("/refresh", refreshToken);
+router.post("/refresh",refreshLimiter, refreshToken);
 router.delete("/account-delete", authMiddleware, deleteAccount);
 router.delete("/sessions/:sessionId", authMiddleware, revokeSession);
-
-// ───── Admin routes (same resource, admin endpoints) ─────
-// router.get("/users", authMiddleware, isAuthorizedRole(["admin"]), listUsers);
-// //move this in admin route because it does not use same resources .
 
 export default router;

@@ -13,16 +13,17 @@ export const getProducts = async (req, res) => {
       limit = 20,
     } = req.query;
 
-    // 1. Build filter
-    const filter = {
-      isActive: true,
-    };
+    // 1. Build filterQuery  like
     // {
     //   isActive: true,
     //   $text: { $search: "phone" },
     //   category: "electronics",
     //   price: { $gte: 100, $lte: 500 }
     // }
+
+    const filter = {
+      isActive: true,
+    };
 
     if (search.trim()) {
       filter.$text = {
@@ -95,34 +96,6 @@ export const getProducts = async (req, res) => {
     });
   }
 };
-
-// export const getProductById = async (req, res) => {
-//   try {
-//     const product = await Product.findOne({
-//       _id: req.params.id,
-//       isActive: true,
-//     }).lean();
-
-//     if (!product) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Product not found",
-//       });
-//     }
-
-//     res.json({
-//       success: true,
-//       product,
-//     });
-//   } catch (error) {
-//     console.error("Get product error:", error);
-
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch product",
-//     });
-//   }
-// };
 
 export const getProductByIdentifier = async (req, res) => {
   try {

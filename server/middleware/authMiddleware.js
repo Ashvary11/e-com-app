@@ -41,7 +41,7 @@ export const authMiddleware = async (req, res, next) => {
         expiresAt: { $gt: new Date() },
       }).select("sessionId"),
       User.findById(uid).select(
-        "name email role isActive isBlocked hasPassword ",
+        "name email role isActive isBlocked hasPassword",
       ),
       ,
     ]);

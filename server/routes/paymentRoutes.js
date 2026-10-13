@@ -11,7 +11,7 @@ const router = express.Router();
 
 // Payments
 router.post("/webhook", razorpayWebhook);
-router.post("/verify", authMiddleware, verifyRazorpayPayment);
-router.post("/:orderNumber", authMiddleware, createRazorpayOrder);
+router.post("/verify", authMiddleware, paymentLimiter,verifyRazorpayPayment);
+router.post("/:orderNumber", authMiddleware, paymentLimiter,createRazorpayOrder);
 
 export default router;
