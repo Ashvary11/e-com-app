@@ -3,6 +3,9 @@
   "version": "3.0.0",
   "description": "E-commerce V2 backend - App name : cartSphere ",
   "main": "server.js",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",

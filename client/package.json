@@ -3,6 +3,9 @@
   "private": true,
   "version": "3.0.0",
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "description": "cartSphere - e-commerce website",
   "scripts": {
     "dev": "vite",
