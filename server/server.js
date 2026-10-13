@@ -15,6 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 connectDB();
+app.set("trust proxy", 1);
 app.use(helmet());
 
 const allowedOrigins = [

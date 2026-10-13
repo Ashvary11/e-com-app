@@ -78,7 +78,7 @@ If you did not request a password reset, you can safely ignore this email. Your 
               <p
                 style="margin:0 0 16px; font-size:16px; line-height:26px; color:#52525b;"
               >
-                Hi,
+                Hi ${name},
               </p>
 
               <p
