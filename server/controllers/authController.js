@@ -34,14 +34,16 @@ const isProduction = process.env.NODE_ENV === "production";
 const jwtCookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: "lax",
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
   maxAge: 15 * 60 * 1000,
 };
 
 const refreshCookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: "lax",
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
   maxAge:
     Number(process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || 30) *
     24 *
@@ -70,7 +72,9 @@ export const registerEmailUser = async (req, res) => {
       password,
     });
 
-    await sendEmail("verifyMail", otp, email);
+    await sendEmail("verifyMail", otp, email).catch((err) =>
+      console.error("Error in sending mail:", err.message),
+    );
 
     return res.status(201).json({
       success: true,
@@ -103,7 +107,9 @@ export const verifyEmail = async (req, res) => {
         ipAddress: req.ip,
       });
 
-      await sendEmail("welcomeMail", user, user.email);
+      await sendEmail("welcomeMail", user, user.email).catch((err) =>
+        console.error("Error in sending mail:", err.message),
+      );
 
       return res
         .cookie("accessToken", jwtToken, jwtCookieOptions)
@@ -158,7 +164,9 @@ export const resendEmailOtp = async (req, res) => {
 
     const { otp } = resultData;
 
-    await sendEmail("verifyMail", otp, email);
+    await sendEmail("verifyMail", otp, email).catch((err) =>
+      console.error("Error in sending mail:", err.message),
+    );
 
     return res.status(200).json({
       success: true,
@@ -218,7 +226,9 @@ export const forgotPassword = async (req, res) => {
 
     const { otp } = await forgotPasswordFn(email);
 
-    sendEmail("resetPasswordMail", { otp }, email);
+    sendEmail("resetPasswordMail", { otp }, email).catch((err) =>
+      console.error("Error in sending mail:", err.message),
+    );
 
     return res.status(200).json({
       success: true,
@@ -252,7 +262,9 @@ export const resetPassword = async (req, res) => {
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
 
-    await sendEmail("passwordResetSuccessMail", {}, email);
+    await sendEmail("passwordResetSuccessMail", {}, email).catch((err) =>
+      console.error("Error in sending mail:", err.message),
+    );
 
     return res.status(200).json({
       success: true,
@@ -283,7 +295,9 @@ export const changePassword = async (req, res) => {
       currentSessionId: req.user.sessionId,
     });
 
-    sendEmail("passwordResetSuccessMail", { user }, user.email);
+    sendEmail("passwordResetSuccessMail", { user }, user.email).catch((err) =>
+      console.error("Error in sending mail:", err.message),
+    );
 
     return res.status(200).json({
       success: true,
@@ -332,7 +346,9 @@ export const deleteAccount = async (req, res) => {
     res.clearCookie("accessToken", jwtCookieOptions);
     res.clearCookie("refreshToken", refreshCookieOptions);
 
-    // await sendEmail("accountDeletedMail", {}, req.user.email);
+    // await sendEmail("accountDeletedMail", {}, req.user.email).catch((err) =>
+    // console.error("Error in sending mail:", err.message),
+    // );
     return res.status(200).json({
       success: true,
       message: "Your account has been deleted successfully.",
