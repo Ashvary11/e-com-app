@@ -157,7 +157,7 @@ function Products() {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
-                        href="#"
+                        // href="#"
                         onClick={(event) => {
                           event.preventDefault();
                           handlePageChange(pagination.page - 1);
@@ -165,7 +165,7 @@ function Products() {
                         className={
                           !pagination.hasPreviousPage
                             ? "pointer-events-none opacity-50"
-                            : ""
+                            :   "cursor-pointer"
                         }
                       />
                     </PaginationItem>
@@ -190,7 +190,7 @@ function Products() {
                         className={
                           !pagination.hasNextPage
                             ? "pointer-events-none opacity-50"
-                            : ""
+                            : "cursor-pointer"
                         }
                       />
                     </PaginationItem>
