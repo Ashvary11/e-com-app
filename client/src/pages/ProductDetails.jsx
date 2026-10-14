@@ -90,7 +90,7 @@ function ProductDetails() {
   if (loading) {
     return (
       <Container>
-        <ScrollToTop/>
+        <ScrollToTop />
         <section className="py-8 sm:py-12">
           <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
             <div className="space-y-4">
@@ -174,7 +174,7 @@ function ProductDetails() {
                     <img
                       src={image}
                       alt={`${product.name} ${index + 1}`}
-                      className="h-full w-full object-contain p-4 sm:p-8 lg:p-10"
+                      className="h-full w-full object-contain  "
                     />
                   </button>
                 ))}

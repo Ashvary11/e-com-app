@@ -86,7 +86,7 @@ function Products() {
   };
 
   return (
-    <Container className="py-8 bg-white/20 mt-5 rounded-lg">
+    <Container className="py-8 bg-white/20   rounded-lg">
       {/* Header + Search */}
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
