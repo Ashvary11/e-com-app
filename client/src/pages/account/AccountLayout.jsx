@@ -57,19 +57,22 @@ function AccountLayout() {
 
   return (
     <Container>
-      <div className="min-h-screen  py-6 sm:py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
+      <div className="min-h-screen py-5 sm:py-8">
+        {/* Account heading */}
+        <div className="mb-5 sm:mb-7">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Account
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage your profile, security, and active sessions.
           </p>
         </div>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        {/* Responsive account layout */}
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)]">
           {/* Navigation */}
-          <aside className="h-fit rounded-xl border bg-background">
-            {/* <nav className="flex gap-1 overflow-x-auto p-2 lg:flex-col "> */}
-            <nav className="flex flex-nowrap gap-1 overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-col">
+          <aside className="min-w-0 rounded-xl border bg-background p-1.5 sm:p-2 lg:sticky lg:top-20">
+            <nav className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-col">
               {accountLinks.map((link) => {
                 const Icon = link.icon;
 
@@ -80,20 +83,20 @@ function AccountLayout() {
                     end={link.end}
                     className={({ isActive }) =>
                       cn(
-                        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        "hover:bg-muted",
+                        "flex shrink-0 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:justify-start",
+                        "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         isActive
                           ? "bg-muted text-foreground"
                           : "text-muted-foreground",
                       )
                     }
                   >
-                    <Icon className="size-4" />
-                    {link.label}
+                    <Icon className="size-4 shrink-0" />
+                    <span>{link.label}</span>
                   </NavLink>
                 );
               })}
-              {/*  */}
+
               {/* Admin-only navigation */}
               {isAdmin && (
                 <>
@@ -104,36 +107,35 @@ function AccountLayout() {
                     end
                     className={({ isActive }) =>
                       cn(
-                        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        "hover:bg-muted",
+                        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                        "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground",
                       )
                     }
                   >
-                    <ShieldCheck className="size-4" />
-                    Admin Dashboard
+                    <ShieldCheck className="size-4 shrink-0" />
+                    <span>Admin Dashboard</span>
                   </NavLink>
                 </>
               )}
 
-              {/*  */}
               <Separator className="my-1 hidden lg:block" />
 
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <LogOut className="size-4" />
-                Logout
+                <LogOut className="size-4 shrink-0" />
+                <span>Logout</span>
               </button>
             </nav>
           </aside>
 
           {/* Page content */}
-          <section className="min-w-0">
+          <section className="min-w-0 w-full">
             <Outlet />
           </section>
         </div>

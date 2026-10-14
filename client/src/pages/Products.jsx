@@ -172,7 +172,7 @@ function Products() {
 
                     <PaginationItem>
                       <PaginationLink
-                        href="#"
+                        // href="#"
                         isActive
                         onClick={(event) => event.preventDefault()}
                       >
@@ -182,7 +182,7 @@ function Products() {
 
                     <PaginationItem>
                       <PaginationNext
-                        href="#"
+                        // href="#"
                         onClick={(event) => {
                           event.preventDefault();
                           handlePageChange(pagination.page + 1);

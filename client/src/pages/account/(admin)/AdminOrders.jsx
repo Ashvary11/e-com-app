@@ -291,7 +291,7 @@ function AdminOrders() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border bg-background p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">Total orders</p>
@@ -327,7 +327,7 @@ function AdminOrders() {
 
       {/* Search and filters */}
       <div className="space-y-3 rounded-xl border bg-background p-3 sm:p-4">
-        <div className="relative">
+        <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -338,62 +338,73 @@ function AdminOrders() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Select
-            value={orderStatus}
-            onValueChange={(value) => changeFilter(setOrderStatus, value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Order status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All order statuses</SelectItem>
-              {ORDER_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {formatStatus(status)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={paymentStatus}
-            onValueChange={(value) => changeFilter(setPaymentStatus, value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Payment status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All payment statuses</SelectItem>
-              {PAYMENT_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {formatStatus(status)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="relative">
-            <CalendarDays className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="date"
-              aria-label="Start date"
-              value={dateFrom}
-              max={dateTo || undefined}
-              onChange={(event) =>
-                changeFilter(setDateFrom, event.target.value)
-              }
-              className="pl-9"
-            />
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Order status</label>
+            <Select
+              value={orderStatus}
+              onValueChange={(value) => changeFilter(setOrderStatus, value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Order status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All order statuses</SelectItem>
+                {ORDER_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {formatStatus(status)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <Input
-            type="date"
-            aria-label="End date"
-            value={dateTo}
-            min={dateFrom || undefined}
-            onChange={(event) => changeFilter(setDateTo, event.target.value)}
-          />
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Payment status</label>
+            <Select
+              value={paymentStatus}
+              onValueChange={(value) => changeFilter(setPaymentStatus, value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Payment status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All payment statuses</SelectItem>
+                {PAYMENT_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {formatStatus(status)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">From date</label>
+            <div className="relative">
+              <CalendarDays className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="date"
+                aria-label="From date"
+                value={dateFrom}
+                max={dateTo || undefined}
+                onChange={(event) =>
+                  changeFilter(setDateFrom, event.target.value)
+                }
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">To date</label>
+            <Input
+              type="date"
+              aria-label="To date"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(event) => changeFilter(setDateTo, event.target.value)}
+            />
+          </div>
         </div>
 
         {hasFilters && (
@@ -415,7 +426,7 @@ function AdminOrders() {
           </span>
         </div>
 
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[850px] text-left text-sm">
             <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr>
@@ -514,7 +525,7 @@ function AdminOrders() {
         </div>
 
         {/* Pagination */}
-        <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <p className="text-sm text-muted-foreground">
             {pagination.total === 0
               ? "No orders"
@@ -526,7 +537,7 @@ function AdminOrders() {
                 )} of ${pagination.total}`}
           </p>
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -569,7 +580,7 @@ function AdminOrders() {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] overflow-y-auto rounded-xl p-4 sm:max-h-[90dvh] sm:w-full sm:max-w-2xl sm:p-6">
           {detailsLoading ? (
             <div className="flex min-h-48 items-center justify-center">
               <LoaderCircle className="size-7 animate-spin text-muted-foreground" />

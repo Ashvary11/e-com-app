@@ -298,38 +298,40 @@ function Checkout() {
 
   return (
     <Container>
-      <section className="py-8 sm:py-12">
-        <div className="mb-8">
-          <div className="mb-4 flex items-center">
+      <section className="py-5 sm:py-8 lg:py-12">
+        <div className="mb-6 sm:mb-8">
+          <div className="mb-3 flex items-center">
             <Button
               variant="ghost"
               size="icon"
               asChild
-              className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
+              className="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground"
               aria-label="Back to cart"
             >
               <Link to="/cart">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
+            <span className="ml-2 text-sm text-muted-foreground">
+              Back to cart
+            </span>
           </div>
 
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
             Checkout
           </h1>
 
-          <p className="mt-2 max-w-xl text-muted-foreground">
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
             Enter your delivery details to continue.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-            {/* Customer + Address */}
+        <div className="grid min-w-0 grid-cols-1 items-start gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_380px]"> {/* Customer + Address */}
             <div className="space-y-6">
-              <Card className="p-6">
+            <Card className="min-w-0 p-4 sm:p-6">
                 <div>
-                  <h2 className="text-xl font-semibold">
+                <h2 className="text-lg font-semibold sm:text-xl">
                     Customer Information
                   </h2>
 
@@ -425,7 +427,7 @@ function Checkout() {
 
               <Card className="p-6">
                 <div>
-                  <h2 className="text-xl font-semibold">Shipping Address</h2>
+                 <h2 className="text-lg font-semibold sm:text-xl">Shipping Address</h2>
 
                   <p className="mt-1 text-sm text-muted-foreground">
                     Where should we deliver your order?
@@ -570,8 +572,8 @@ function Checkout() {
             </div>
 
             {/* Order Summary */}
-            <Card className="h-fit p-6 lg:sticky lg:top-24">
-              <h2 className="text-xl font-semibold">Order Summary</h2>
+           <Card className="h-fit min-w-0 p-4 sm:p-6 lg:sticky lg:top-24">
+              <h2 className="text-lg font-semibold sm:text-xl">Order Summary</h2>
 
               <div className="mt-6 space-y-4">
                 {cartItems.map((item) => (
@@ -627,7 +629,7 @@ function Checkout() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full"
+                  className="w-full cursor-pointer"
                   disabled={loading}
                 >
                   {loading ? (
@@ -637,7 +639,7 @@ function Checkout() {
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      <CheckCircle2 className="mr-2 h-4 w-4 " />
                       Proceed to Payment
                     </>
                   )}

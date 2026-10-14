@@ -646,7 +646,7 @@ function AdminDashboard() {
   return (
     <div className="min-w-0 space-y-6 pb-6">
       {/* Page header */}
-      <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-3 border-b pb-4 sm:gap-4 sm:pb-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Admin</span>
@@ -658,12 +658,12 @@ function AdminDashboard() {
             Dashboard
           </h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
             Monitor your store performance, sales, orders, and inventory.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           {lastUpdated && (
             <span className="text-xs text-muted-foreground">
               Updated{" "}
@@ -689,11 +689,11 @@ function AdminDashboard() {
       </div>
 
       {/* Welcome section */}
-      <section className="relative overflow-hidden rounded-2xl border bg-muted/30 p-5 sm:p-7">
+      <section className="relative min-w-0 overflow-hidden rounded-2xl border bg-muted/30 p-4 sm:p-6 lg:p-7">
         <div className="pointer-events-none absolute -right-12 -top-16 size-56 rounded-full border-[28px] border-muted/60" />
         <div className="pointer-events-none absolute -right-2 -top-5 size-36 rounded-full border border-border/80" />
 
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex min-w-0 flex-col gap-4 sm:gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-xl">
             <Badge variant="outline" className="mb-3 gap-1.5 bg-background">
               <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -710,14 +710,18 @@ function AdminDashboard() {
             </p>
           </div>
 
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button onClick={() => navigate("/account/admin/orders")}>
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <Button
+              className="flex-1 sm:flex-none"
+              onClick={() => navigate("/account/admin/orders")}
+            >
               View orders
               <ArrowRight className="ml-2 size-4" />
             </Button>
 
             <Button
               variant="outline"
+              className="flex-1 sm:flex-none"
               onClick={() => navigate("/account/admin/products")}
             >
               <Package className="mr-2 size-4" />
@@ -729,15 +733,21 @@ function AdminDashboard() {
 
       {/* Date range filters */}
       <section className="rounded-xl border bg-background p-4 sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="font-semibold tracking-tight">Analytics overview</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Revenue and order trends for your selected period.
-            </p>
-          </div>
+       <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+  <div className="min-w-0">
+    <h2 className="font-semibold tracking-tight">
+      Analytics overview
+    </h2>
+    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+      Revenue and order trends for your selected period.
+    </p>
+  </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div  className={`grid min-w-0 grid-cols-1 gap-3 ${
+      range === "custom"
+        ? "sm:grid-cols-2 xl:max-w-3xl xl:grid-cols-4"
+        : "sm:grid-cols-[minmax(0,1fr)] xl:w-44"
+    }`}>
             <div className="min-w-0 space-y-1.5">
               <label
                 htmlFor="dashboard-range"
@@ -832,7 +842,7 @@ function AdminDashboard() {
       )}
 
       {/* Overview cards */}
-      <section className="space-y-3">
+    <section className="min-w-0 rounded-xl border bg-background p-3 sm:p-4 lg:p-5">
         <div>
           <h2 className="font-semibold tracking-tight">Store metrics</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -840,7 +850,7 @@ function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+       <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 2xl:grid-cols-4">
           <StatCard
             title="Total users"
             value={formatNumber(overview?.totalUsers)}

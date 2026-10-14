@@ -18,7 +18,6 @@ import {
   Monitor,
   X,
   LoaderCircle,
- 
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -202,9 +201,7 @@ function AdminUsers() {
         role: newRole,
       });
 
-      toast.success(
-        response.data.message || "User role updated successfully.",
-      );
+      toast.success(response.data.message || "User role updated successfully.");
 
       await fetchUsers({ showRefresh: true });
 
@@ -220,9 +217,7 @@ function AdminUsers() {
 
   // Update active or blocked status.
   const handleStatusChange = async (user, changes, actionLabel) => {
-    const confirmed = window.confirm(
-      `${actionLabel} for ${user.name}?`,
-    );
+    const confirmed = window.confirm(`${actionLabel} for ${user.name}?`);
 
     if (!confirmed) return;
 
@@ -324,8 +319,7 @@ function AdminUsers() {
     fetchUsers({ showRefresh: true });
   };
 
-  const firstItem =
-    pagination.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const firstItem = pagination.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
   const lastItem = Math.min(page * PAGE_SIZE, pagination.total);
 
@@ -340,17 +334,15 @@ function AdminUsers() {
   return (
     <div className="w-full min-w-0 space-y-5">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Users className="size-6 shrink-0 text-foreground" />
 
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Users
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
           </div>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
             Manage accounts, roles, access and active sessions.
           </p>
         </div>
@@ -362,17 +354,15 @@ function AdminUsers() {
           className="w-full sm:w-auto"
         >
           <RefreshCw
-            className={`mr-2 size-4 ${
-              refreshing ? "animate-spin" : ""
-            }`}
+            className={`mr-2 size-4 ${refreshing ? "animate-spin" : ""}`}
           />
           Refresh
         </Button>
       </div>
 
       {/* Summary cards for the currently displayed page */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border bg-background p-4">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">
+        <div className="min-w-0 rounded-xl border bg-background p-3.5 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -389,7 +379,7 @@ function AdminUsers() {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-background p-4">
+        <div className="min-w-0 rounded-xl border bg-background p-3.5 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -406,7 +396,7 @@ function AdminUsers() {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-background p-4">
+        <div className="min-w-0 rounded-xl border bg-background p-3.5 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -425,7 +415,7 @@ function AdminUsers() {
       </div>
 
       {/* Search and filters */}
-      <div className="space-y-4 rounded-xl border bg-background p-3 sm:p-4">
+      <div className="min-w-0 space-y-4 rounded-xl border bg-background p-3 sm:p-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
@@ -565,7 +555,7 @@ function AdminUsers() {
 
       {/* Users table */}
       <div className="overflow-hidden rounded-xl border bg-background">
-        <div className="flex flex-col gap-1 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-1 border-b px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between">
           <h2 className="font-semibold">All users</h2>
 
           <p className="text-xs text-muted-foreground">
@@ -575,7 +565,7 @@ function AdminUsers() {
 
         <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[1050px] text-left text-sm">
-            <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
+            <thead className="border-b bg-muted/95 text-xs text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">User</th>
                 <th className="px-4 py-3 font-medium">Role</th>
@@ -639,8 +629,8 @@ function AdminUsers() {
                       className="transition-colors hover:bg-muted/30"
                     >
                       {/* User information */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
+                      <td className="px-3 py-4 sm:px-4">
+                        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                           {user.avatar ? (
                             <img
                               src={user.avatar}
@@ -653,12 +643,12 @@ function AdminUsers() {
                             </div>
                           )}
 
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="max-w-[200px] truncate font-medium">
                               {user.name}
                             </p>
 
-                            <p className="mt-0.5 flex max-w-[220px] items-center gap-1 truncate text-xs text-muted-foreground">
+                            <p className="mt-0.5 flex max-w-[220px] min-w-0 items-center gap-1 truncate text-xs text-muted-foreground">
                               <Mail className="size-3 shrink-0" />
                               <span className="truncate">{user.email}</span>
                             </p>
@@ -842,15 +832,16 @@ function AdminUsers() {
         </div>
 
         {/* Pagination */}
-        <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-3 border-t px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <p className="text-xs text-muted-foreground">
             Page {page} of {Math.max(pagination.totalPages, 1)}
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <Button
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto"
               disabled={loading || page <= 1}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
             >
@@ -861,6 +852,7 @@ function AdminUsers() {
             <Button
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto"
               disabled={
                 loading ||
                 !pagination.hasNextPage ||
@@ -878,7 +870,7 @@ function AdminUsers() {
       {/* User details dialog */}
       {selectedUser && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-2 pt-4 sm:items-center sm:p-5"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               closeUserDetails();
@@ -889,10 +881,10 @@ function AdminUsers() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="admin-user-details-title"
-            className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border bg-background shadow-xl"
+            className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-2xl border bg-background shadow-xl sm:max-h-[90dvh]"
           >
             {/* Dialog header */}
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b bg-background px-5 py-4">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background px-3 py-3.5 sm:gap-4 sm:px-5 sm:py-4">
               <div>
                 <h2
                   id="admin-user-details-title"
@@ -964,9 +956,7 @@ function AdminUsers() {
 
                 {/* Account information */}
                 <div className="space-y-4 border-t px-5 py-5">
-                  <h3 className="text-sm font-semibold">
-                    Account information
-                  </h3>
+                  <h3 className="text-sm font-semibold">Account information</h3>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <DetailItem
@@ -1021,18 +1011,14 @@ function AdminUsers() {
 
                 {/* Account actions */}
                 <div className="space-y-3 border-t px-5 py-5">
-                  <h3 className="text-sm font-semibold">
-                    Account actions
-                  </h3>
+                  <h3 className="text-sm font-semibold">Account actions</h3>
 
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={busyUserId === selectedUser._id}
-                      onClick={() =>
-                        handleRevokeSessions(selectedUser)
-                      }
+                      onClick={() => handleRevokeSessions(selectedUser)}
                     >
                       <Monitor className="mr-2 size-4" />
                       Revoke all sessions
@@ -1072,8 +1058,8 @@ function AdminUsers() {
                   </div>
 
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Changes are applied immediately after confirmation.
-                    Session revocation requires the user to sign in again.
+                    Changes are applied immediately after confirmation. Session
+                    revocation requires the user to sign in again.
                   </p>
                 </div>
               </>

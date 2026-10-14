@@ -14,6 +14,7 @@ import {
   removeFromCart,
   scheduleDbCartUpdate,
 } from "../store/slices/cartSlice";
+import ScrollToTop from "@/components/ui/scrollToTop";
 
 function Cart() {
   const dispatch = useDispatch();
@@ -50,6 +51,7 @@ function Cart() {
 
   return (
     <Container>
+      <ScrollToTop/>
       <section className="py-8 sm:py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Shopping Cart</h1>
@@ -159,8 +161,6 @@ function Cart() {
                   </div>
                 </Card>
               ))}
-
-          
             </div>
 
             {/* Summary */}
@@ -173,28 +173,30 @@ function Cart() {
 
                   <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
-
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
 
                   <span className="font-medium text-green-600">Free</span>
                 </div>
-
                 <Separator />
-
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
 
                   <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
 
-                <Button asChild className="w-full" size="lg">
-                  <Link to="/checkout">Checkout</Link>
-                </Button>
-
-                <Button asChild variant="outline" className="w-full">
-                  <Link to="/products">Continue Shopping</Link>
-                </Button>
+                <Link
+                  to="/checkout"
+                  className="flex w-full items-center justify-center rounded-md bg-primary px-8 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 h-8"
+                >
+                  Checkout
+                </Link>
+                <Link
+                  to="/products"
+                  className="flex w-full items-center justify-center rounded-md border border-input bg-background px-8 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground h-8"
+                >
+                  Continue Shopping
+                </Link>
               </div>
             </Card>
           </div>

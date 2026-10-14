@@ -405,7 +405,7 @@ function AdminProducts() {
   return (
     <div className="space-y-6">
       {/* Page heading */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -413,14 +413,14 @@ function AdminProducts() {
           </p>
         </div>
 
-        <Button onClick={openCreateModal}>
+        <Button onClick={openCreateModal} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Add product
         </Button>
       </div>
 
       {/* Product statistics */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border bg-background p-4">
           <p className="text-sm text-muted-foreground">Products found</p>
           <p className="mt-2 text-2xl font-semibold">
@@ -455,7 +455,7 @@ function AdminProducts() {
 
       {/* Search and filters */}
       <div className="space-y-4 rounded-xl border bg-background p-4">
-        <div className="relative">
+        <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchInput}
@@ -465,7 +465,7 @@ function AdminProducts() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+       <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
           <select
             value={category}
             onChange={(event) => {
@@ -525,7 +525,7 @@ function AdminProducts() {
 
       {/* Product table +pagination +refresh */}
       <div className="overflow-hidden rounded-xl border bg-background">
-        <div className="flex items-center  border-b px-4 py-3">
+        <div className="flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <div>
             <h2 className="font-medium">Product inventory</h2>
             <div className="mt-1 text-xs text-muted-foreground">
@@ -540,7 +540,7 @@ function AdminProducts() {
 
           {/* Pagination */}
           {!error && !loading && products.length > 0 && (
-            <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between ml-auto">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:ml-auto">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -575,6 +575,7 @@ function AdminProducts() {
             onClick={fetchProducts}
             disabled={loading}
             aria-label="Refresh products"
+            className="shrink-0 self-end sm:self-auto"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
@@ -615,8 +616,8 @@ function AdminProducts() {
         )}
 
         {!error && !loading && products.length > 0 && (
-          <div className="max-h-[400px] w-full overflow-y-auto">
-            <table className="w-full  table-fixed text-left text-sm">
+          <div className="max-h-[400px] w-full overflow-auto overscroll-x-contain">
+          <table className="w-full min-w-[850px] table-fixed text-left text-sm">
               <thead className="sticky top-0 z-10 border-b bg-muted text-muted-foreground">
                 <tr>
                   <th className="w-[32%] px-3 py-3">
@@ -751,7 +752,7 @@ function AdminProducts() {
       {/* Create/Edit product modal */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:items-center sm:p-6"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-2 sm:items-center sm:p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeModal();
           }}

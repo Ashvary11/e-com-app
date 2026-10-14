@@ -93,7 +93,7 @@ const productSlice = createSlice({
 
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Something went wrong";
+        state.error = action.payload || "Unable to connect to the server. It may be waking up. Please try again in a few seconds.";
       })
 
       // Categories

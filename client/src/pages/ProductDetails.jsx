@@ -12,6 +12,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import api from "../../src/services/api";
 import { addToCart, scheduleDbCartUpdate } from "../store/slices/cartSlice";
 import { useDispatch } from "react-redux";
+import ScrollToTop from "@/components/ui/scrollToTop";
 
 function ProductDetails() {
   // <ProductCard key={product._id} product={product} />
@@ -83,14 +84,15 @@ function ProductDetails() {
   };
 
   const handleBuyNow = () => {
-    navigate("/checkout")
+    navigate("/checkout");
   };
 
   if (loading) {
     return (
       <Container>
+        <ScrollToTop/>
         <section className="py-8 sm:py-12">
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
             <div className="space-y-4">
               <Skeleton className="aspect-square w-full rounded-xl" />
 
@@ -136,8 +138,8 @@ function ProductDetails() {
 
   return (
     <Container>
-      <section className="py-8 sm:py-12">
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+      <section className="py-4 sm:py-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Product Images */}
           <div>
             <Card className="overflow-hidden">
@@ -157,13 +159,13 @@ function ProductDetails() {
             </Card>
 
             {product.images?.length > 1 && (
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-2 sm:mt-4 sm:gap-3">
                 {product.images.map((image, index) => (
                   <button
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setSelectedImage(index)}
-                    className={`h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-muted ${
+                    className={`h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-muted sm:h-20 sm:w-20 ${
                       selectedImage === index
                         ? "border-primary ring-2 ring-primary/20"
                         : "border-border"
@@ -172,7 +174,7 @@ function ProductDetails() {
                     <img
                       src={image}
                       alt={`${product.name} ${index + 1}`}
-                      className="h-full w-full object-contain p-1"
+                      className="h-full w-full object-contain p-4 sm:p-8 lg:p-10"
                     />
                   </button>
                 ))}
@@ -191,7 +193,7 @@ function ProductDetails() {
                 <Badge variant="outline">{product.category}</Badge>
               </div>
 
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h1 className="text-xl font-bold tracking-tight break-words sm:text-2xl lg:text-3xl">
                 {product.name}
               </h1>
 
@@ -249,7 +251,7 @@ function ProductDetails() {
 
             {/* Quantity */}
             {!isOutOfStock && (
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="font-medium">Quantity</span>
 
                 <div className="flex items-center rounded-md border">
@@ -281,7 +283,7 @@ function ProductDetails() {
             )}
 
             {/* Actions */}
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2">
               <Button
                 size="lg"
                 variant="outline"

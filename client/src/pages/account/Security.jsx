@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { Eye, EyeOff, KeyRound, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 import {
   Card,
@@ -16,13 +17,12 @@ import {
   changePasswordSchema,
   setPasswordSchema,
 } from "../../validators/authValidators";
-import { useNavigate } from "react-router-dom";
 
 function PasswordField({ label, name, value, onChange, placeholder }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <label htmlFor={name} className="text-sm font-medium">
         {label}
       </label>
@@ -38,14 +38,15 @@ function PasswordField({ label, name, value, onChange, placeholder }) {
           autoComplete={
             name === "currentPassword" ? "current-password" : "new-password"
           }
-          className="pr-10"
+          className="h-10 pr-10 sm:h-11"
         />
 
         <button
           type="button"
           onClick={() => setShowPassword((previous) => !previous)}
-          className="absolute right-0 top-0 flex h-full w-10 items-center justify-center text-muted-foreground hover:text-foreground"
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-pressed={showPassword}
         >
           {showPassword ? (
             <EyeOff className="size-4" />
@@ -62,13 +63,14 @@ function Security() {
   const { user } = useSelector((state) => state.auth);
   const [hasPassword, setHasPassword] = useState(user?.hasPassword === true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -148,7 +150,8 @@ function Security() {
 
       setErrors({});
     } catch (error) {
-       setShowForgotPassword(true);
+      setShowForgotPassword(true);
+
       toast.error(
         error.response?.data?.message ||
           (hasPassword
@@ -161,83 +164,100 @@ function Security() {
   };
 
   return (
-    <div className="space-y-6 bg-white p-3 rounded-xl">
+    <div className="min-w-0 space-y-4 rounded-xl border bg-background p-3 sm:space-y-6 sm:p-5 lg:p-6">
+      {/* Heading */}
       <div>
-        <h1 className="text-2xl font-semibold">Security</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+          Security
+        </h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           Keep your account secure by using a strong password.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LockKeyhole className="size-5" />
+      {/* Password form */}
+      <Card className="min-w-0">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <LockKeyhole className="size-5 shrink-0" />
             {hasPassword ? "Change password" : "Set password"}
           </CardTitle>
         </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+          <form onSubmit={handleSubmit} className="w-full max-w-lg space-y-5">
             {hasPassword && (
               <>
-                <PasswordField
-                  label="Current password"
-                  name="currentPassword"
-                  value={form.currentPassword}
-                  onChange={handleChange}
-                  placeholder="Enter your current password"
-                />
+                <div className="space-y-2">
+                  <PasswordField
+                    label="Current password"
+                    name="currentPassword"
+                    value={form.currentPassword}
+                    onChange={handleChange}
+                    placeholder="Enter your current password"
+                  />
 
-                {errors.currentPassword && (
-                  <p className="-mt-3 text-sm text-destructive">
-                    {errors.currentPassword}
-                  </p>
+                  {errors.currentPassword && (
+                    <p className="text-sm leading-relaxed text-destructive">
+                      {errors.currentPassword}
+                    </p>
+                  )}
+                </div>
+
+                {showForgotPassword && (
+                  <div className="-mt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto gap-1 p-0 text-muted-foreground hover:text-primary"
+                      onClick={() => navigate("/forgot-password")}
+                    >
+                      <KeyRound className="size-4" />
+                      Forgot password?
+                    </Button>
+                  </div>
                 )}
-               {showForgotPassword && <div className="-mt-2 flex justify-end">
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="h-auto gap-1 p-0 text-muted-foreground hover:text-primary"
-                    onClick={() => navigate("/forgot-password")}
-                  >
-                    <KeyRound className="size-4" />
-                    Forgot password?
-                  </Button>
-                </div>}
               </>
             )}
 
-            <PasswordField
-              label="New password"
-              name="newPassword"
-              value={form.newPassword}
-              onChange={handleChange}
-              placeholder="Enter your new password"
-            />
+            <div className="space-y-2">
+              <PasswordField
+                label="New password"
+                name="newPassword"
+                value={form.newPassword}
+                onChange={handleChange}
+                placeholder="Enter your new password"
+              />
 
-            {errors.newPassword && (
-              <p className="-mt-3 text-sm text-destructive">
-                {errors.newPassword}
-              </p>
-            )}
+              {errors.newPassword && (
+                <p className="text-sm leading-relaxed text-destructive">
+                  {errors.newPassword}
+                </p>
+              )}
+            </div>
 
-            <PasswordField
-              label="Confirm new password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm your new password"
-            />
+            <div className="space-y-2">
+              <PasswordField
+                label="Confirm new password"
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm your new password"
+              />
 
-            {errors.confirmPassword && (
-              <p className="-mt-3 text-sm text-destructive">
-                {errors.confirmPassword}
-              </p>
-            )}
+              {errors.confirmPassword && (
+                <p className="text-sm leading-relaxed text-destructive">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
 
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-fit"
+            >
               {loading
                 ? hasPassword
                   ? "Changing password..."

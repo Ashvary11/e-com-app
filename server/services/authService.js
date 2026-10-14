@@ -408,7 +408,8 @@ export const changePasswordFn = async ({
 
 export const refreshSessionFn = async ({ refreshToken }) => {
   if (!refreshToken) {
-    throwError("Refresh token missing.", 401);
+    // throwError("Refresh token missing.", 401);
+    throwError("Login Required.", 401);
   }
   const refreshTokenHash = generateHash(refreshToken);
 
